@@ -1,5 +1,4 @@
 import './styles/global.css';
-import 'tweakpane/dist/tweakpane.css';
 import * as THREE from 'three';
 import { SceneComposer } from './scene/SceneComposer';
 import { SimulationEngine } from './physics/simulation';

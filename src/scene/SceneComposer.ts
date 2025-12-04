@@ -28,7 +28,6 @@ export class SceneComposer {
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.1;
 
@@ -58,7 +57,7 @@ export class SceneComposer {
     );
     this.composer.addPass(bloom);
 
-    const film = new FilmPass(0.12, 0.25, 648, false);
+    const film = new FilmPass();
     this.composer.addPass(film);
 
     window.addEventListener('resize', () => this.handleResize());

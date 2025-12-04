@@ -29,7 +29,6 @@ function makeLeatherBall(palette: MaterialPalette, radius: number): THREE.Mesh {
 }
 
 function makeDart(palette: MaterialPalette): THREE.Mesh {
-  const group = new THREE.Group();
   const body = new THREE.ConeGeometry(0.12, 1.4, 32);
   const bodyMaterial = new THREE.MeshStandardMaterial({
     map: palette.copper,
@@ -38,7 +37,6 @@ function makeDart(palette: MaterialPalette): THREE.Mesh {
   });
   const bodyMesh = new THREE.Mesh(body, bodyMaterial);
   bodyMesh.castShadow = true;
-  group.add(bodyMesh);
 
   const finGeometry = new THREE.BoxGeometry(0.02, 0.5, 0.3);
   const finMaterial = new THREE.MeshStandardMaterial({ color: '#4a90ff', metalness: 0.8, roughness: 0.2 });
@@ -46,9 +44,9 @@ function makeDart(palette: MaterialPalette): THREE.Mesh {
     const fin = new THREE.Mesh(finGeometry, finMaterial);
     fin.position.set(0, -0.5, 0);
     fin.rotation.y = (Math.PI / 2) * i;
-    group.add(fin);
+    bodyMesh.add(fin);
   }
-  return group;
+  return bodyMesh;
 }
 
 function makePlasma(palette: MaterialPalette): THREE.Mesh {

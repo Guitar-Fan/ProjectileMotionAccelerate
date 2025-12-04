@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Pane } from 'tweakpane';
+import type { FolderApi } from 'tweakpane';
 import chroma from 'chroma-js';
 import { EnvironmentState, ForceProfile, ProjectileDefinition } from '../physics/types';
 
@@ -14,7 +15,7 @@ interface ControlsConfig {
 }
 
 export class ControlsPanel {
-	private pane: Pane;
+	private pane: any;
 	private state = {
 		forceId: '',
 		projectileId: '',
@@ -35,11 +36,11 @@ export class ControlsPanel {
 		this.pane = new Pane({ container: root, title: 'Launch Console' });
 
 		const forceOptions = Object.fromEntries(config.forces.map((force) => [force.label, force.id]));
-		const forceInput = this.pane.addInput(this.state, 'forceId', {
+		const forceInput = this.pane.addBinding(this.state, 'forceId', {
 			options: forceOptions,
 			label: 'Force Profile'
 		});
-		forceInput.on('change', (ev) => {
+		forceInput.on('change', (ev: any) => {
 			this.state.forceId = ev.value;
 			const profile = this.config.forces.find((f) => f.id === this.state.forceId);
 			if (profile) {
@@ -48,11 +49,11 @@ export class ControlsPanel {
 		});
 
 		const projectileOptions = Object.fromEntries(config.projectiles.map((proj) => [proj.label, proj.id]));
-		const projectileInput = this.pane.addInput(this.state, 'projectileId', {
+		const projectileInput = this.pane.addBinding(this.state, 'projectileId', {
 			options: projectileOptions,
 			label: 'Projectile'
 		});
-		projectileInput.on('change', (ev) => {
+		projectileInput.on('change', (ev: any) => {
 			this.state.projectileId = ev.value;
 			const projectile = this.config.projectiles.find((p) => p.id === this.state.projectileId);
 			if (projectile) {
@@ -60,26 +61,26 @@ export class ControlsPanel {
 			}
 		});
 
-		this.pane.addSeparator();
+		this.pane.addBlade({ view: 'separator' });
 
 		const envFolder = this.pane.addFolder({ title: 'Atmospheric Envelope' });
 		envFolder
-			.addInput(this.state, 'gravity', { min: 2, max: 15, step: 0.1, label: 'Gravity (m/s²)' })
+			.addBinding(this.state, 'gravity', { min: 2, max: 15, step: 0.1, label: 'Gravity (m/s²)' })
 			.on('change', () => this.emitEnvironment());
 		envFolder
-			.addInput(this.state, 'airDensity', { min: 0.4, max: 1.4, step: 0.01, label: 'Air Density' })
+			.addBinding(this.state, 'airDensity', { min: 0.4, max: 1.4, step: 0.01, label: 'Air Density' })
 			.on('change', () => this.emitEnvironment());
 		envFolder
-			.addInput(this.state, 'windX', { min: -12, max: 12, step: 0.1, label: 'Wind X' })
+			.addBinding(this.state, 'windX', { min: -12, max: 12, step: 0.1, label: 'Wind X' })
 			.on('change', () => this.emitEnvironment());
 		envFolder
-			.addInput(this.state, 'windZ', { min: -12, max: 12, step: 0.1, label: 'Wind Z' })
+			.addBinding(this.state, 'windZ', { min: -12, max: 12, step: 0.1, label: 'Wind Z' })
 			.on('change', () => this.emitEnvironment());
 
-		this.pane.addSeparator();
+		this.pane.addBlade({ view: 'separator' });
 
 		this.pane
-			.addButton({ title: 'Launch Projectile' })
+			.addBlade({ view: 'button', title: 'Launch Projectile' })
 			.on('click', () => this.triggerLaunch());
 
 		const initial = this.config.forces.find((f) => f.id === this.state.forceId);
@@ -92,7 +93,6 @@ export class ControlsPanel {
 		const index = this.config.forces.findIndex((f) => f.id === profile.id);
 		if (index >= 0) {
 			this.state.forceId = profile.id;
-			this.pane.refresh();
 			this.config.onForceHover?.(profile);
 		}
 	}
@@ -118,5 +118,3 @@ export class ControlsPanel {
 		};
 	}
 }
-import { Pane } from 'tweakpane';
-import chroma from 'chroma-js';
