@@ -23,12 +23,13 @@ export const forceProfiles: ForceProfile[] = [
   {
     id: 'cannon',
     label: 'Orbital Cannon',
-    description: 'Electromagnetic rails deliver a brutal 18 kN kick over 60 milliseconds.',
+    description: 'Electromagnetic rails deliver a brutal 60 kN kick over 60 milliseconds.',
     duration: 0.06,
-    impulse: (t) => impulseVector(18000 * easeImpulse(t, 0.06), 12),
+    impulse: (t) => impulseVector(60000 * easeImpulse(t, 0.06), 25, 15),
     spinAxis: new THREE.Vector3(0, 0, 1),
     spinRate: 6,
-    launchElevation: 12,
+    launchElevation: 25,
+    launchPosition: new THREE.Vector3(0, 1.2, 0),
     icon: '/assets/sprites/cannon.svg'
   },
   {
@@ -36,10 +37,11 @@ export const forceProfiles: ForceProfile[] = [
     label: 'Midfield Kick',
     description: 'Biomeasured soccer kick with pronounced topspin and longer contact.',
     duration: 0.14,
-    impulse: (t) => impulseVector(4500 * easeImpulse(t, 0.14), 16, 8),
+    impulse: (t) => impulseVector(15000 * easeImpulse(t, 0.14), 35, 25),
     spinAxis: new THREE.Vector3(1, 0, 0),
     spinRate: -22,
-    launchElevation: 16,
+    launchElevation: 35,
+    launchPosition: new THREE.Vector3(-5, 1.2, 3),
     icon: '/assets/sprites/kick.svg'
   },
   {
@@ -47,10 +49,11 @@ export const forceProfiles: ForceProfile[] = [
     label: 'Ash Bat Crank',
     description: 'Heavy bat slap-shot with sharp impulse and backspin lift.',
     duration: 0.085,
-    impulse: (t) => impulseVector(6200 * easeImpulse(t, 0.085), 24, -6),
+    impulse: (t) => impulseVector(20000 * easeImpulse(t, 0.085), 45, -30),
     spinAxis: new THREE.Vector3(0, 0, 1),
     spinRate: 32,
-    launchElevation: 24,
+    launchElevation: 45,
+    launchPosition: new THREE.Vector3(3, 1.2, -4),
     icon: '/assets/sprites/bat.svg'
   },
   {
@@ -58,10 +61,11 @@ export const forceProfiles: ForceProfile[] = [
     label: 'Hand Throw',
     description: 'Human-scale throw with long impulse ramp and subtle pronation.',
     duration: 0.21,
-    impulse: (t) => impulseVector(2100 * easeImpulse(t, 0.21), 35, 4),
+    impulse: (t) => impulseVector(8000 * easeImpulse(t, 0.21), 50, 35),
     spinAxis: new THREE.Vector3(0.4, 0.2, 0).normalize(),
     spinRate: 18,
-    launchElevation: 35,
+    launchElevation: 50,
+    launchPosition: new THREE.Vector3(4, 1.5, 5),
     icon: '/assets/sprites/throw.svg'
   },
   {
@@ -69,10 +73,11 @@ export const forceProfiles: ForceProfile[] = [
     label: 'Rail Launcher',
     description: 'Sustained linear motor push that continues downrange for the first 25 meters.',
     duration: 0.12,
-    impulse: (t) => impulseVector(9000 * easeImpulse(t, 0.12), 8, 0),
+    impulse: (t) => impulseVector(35000 * easeImpulse(t, 0.12), 30, -20),
     spinAxis: new THREE.Vector3(0, 1, 0),
     spinRate: 4,
-    launchElevation: 8,
+    launchElevation: 30,
+    launchPosition: new THREE.Vector3(-6, 1.2, -6),
     icon: '/assets/sprites/rail.svg'
   }
 ];

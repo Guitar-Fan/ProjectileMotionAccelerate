@@ -48,10 +48,13 @@ function cloneState(state: ProjectileState): ProjectileState {
     position: state.position.clone(),
     velocity: state.velocity.clone(),
     spin: state.spin.clone(),
+    rotation: state.rotation.clone(),
     mass: state.mass,
     area: state.area,
     dragCoefficient: state.dragCoefficient,
     spinDamping: state.spinDamping,
-    restitution: state.restitution
+    restitution: state.restitution,
+    momentOfInertia: state.momentOfInertia.clone(),
+    radius: state.radius
   };
 }

@@ -7,6 +7,7 @@ import { ForceLegend } from './ui/ForceLegend';
 import { HUD } from './ui/HUD';
 import { Timeline } from './instrumentation/Timeline';
 import { Diagnostics } from './instrumentation/Diagnostics';
+import { MiniMap } from './instrumentation/MiniMap';
 import { forceProfiles } from './data/forceProfiles';
 import { projectileCatalog } from './data/projectileCatalog';
 import { environmentPresets } from './data/environmentPresets';
@@ -24,11 +25,55 @@ const composer = new SceneComposer(appRoot);
 const simulation = new SimulationEngine(composer.scene, composer.assets.palette);
 let environment: EnvironmentState = environmentPresets[0];
 
+// Top-right container for force icons
 const legendHost = document.createElement('div');
+uiRoot.appendChild(legendHost);
+
+// Middle-right container for controls
+const controlsContainer = document.createElement('div');
+controlsContainer.style.cssText = `
+  position: fixed;
+  top: 50%;
+  right: 1.5rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 10;
+`;
+document.body.appendChild(controlsContainer);
+
 const controlsHost = document.createElement('div');
 controlsHost.style.width = '280px';
-uiRoot.appendChild(legendHost);
-uiRoot.appendChild(controlsHost);
+const dayNightHost = document.createElement('div');
+dayNightHost.style.cssText = 'display: flex; justify-content: center;';
+controlsContainer.appendChild(controlsHost);
+controlsContainer.appendChild(dayNightHost);
+
+// Add day/night toggle button
+const dayNightBtn = document.createElement('button');
+dayNightBtn.textContent = '☀️ Day / 🌙 Night';
+dayNightBtn.style.cssText = `
+  padding: 0.75rem 1.5rem;
+  background: rgba(107, 242, 255, 0.15);
+  border: 1px solid rgba(107, 242, 255, 0.3);
+  border-radius: 0.75rem;
+  color: #f5f7ff;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+`;
+dayNightBtn.onmouseover = () => {
+  dayNightBtn.style.background = 'rgba(107, 242, 255, 0.25)';
+  dayNightBtn.style.transform = 'translateY(-2px)';
+};
+dayNightBtn.onmouseout = () => {
+  dayNightBtn.style.background = 'rgba(107, 242, 255, 0.15)';
+  dayNightBtn.style.transform = 'translateY(0)';
+};
+dayNightBtn.onclick = () => composer.lightingRig.toggleDayNight();
+dayNightHost.appendChild(dayNightBtn);
 
 let controls: ControlsPanel;
 
@@ -66,6 +111,7 @@ controls = new ControlsPanel(controlsHost, {
 const hud = new HUD(document.body);
 const timeline = new Timeline(document.body);
 const diagnostics = new Diagnostics(document.body);
+const minimap = new MiniMap(appRoot, composer.scene, composer.cameraRig.camera);
 
 let activeRecord: LaunchRecord | undefined;
 
@@ -102,6 +148,7 @@ function loop(): void {
   hud.update(latestSample, latestRecord);
   timeline.update(records);
   diagnostics.update(delta, records);
+  minimap.update(simulation.getActiveProjectiles());
 
   requestAnimationFrame(loop);
 }

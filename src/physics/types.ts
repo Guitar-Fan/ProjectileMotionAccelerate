@@ -3,12 +3,15 @@ import * as THREE from 'three';
 export interface ProjectileState {
   position: THREE.Vector3;
   velocity: THREE.Vector3;
-  spin: THREE.Vector3;
+  spin: THREE.Vector3; // Angular velocity (rad/s)
+  rotation: THREE.Quaternion; // Orientation
   mass: number;
   area: number;
   dragCoefficient: number;
   spinDamping: number;
   restitution: number;
+  momentOfInertia: THREE.Vector3; // Ix, Iy, Iz for principal axes
+  radius: number; // Characteristic radius for torque calculations
 }
 
 export interface ProjectileDefinition {
@@ -20,6 +23,8 @@ export interface ProjectileDefinition {
   dragCoefficient: number;
   spinDamping: number;
   restitution: number;
+  radius: number; // Characteristic radius (m)
+  momentOfInertia: THREE.Vector3; // Ix, Iy, Iz (kg·m²)
   meshFactory: (palette: MaterialPalette) => THREE.Object3D;
 }
 
@@ -32,6 +37,7 @@ export interface ForceProfile {
   spinAxis: THREE.Vector3;
   spinRate: number;
   launchElevation: number;
+  launchPosition?: THREE.Vector3; // Optional starting position
   icon: string;
 }
 
@@ -53,6 +59,9 @@ export interface TelemetrySample {
   altitude: number;
   speed: number;
   range: number;
+  velocityX: number;
+  velocityY: number;
+  velocityZ: number;
 }
 
 export interface LaunchRecord {

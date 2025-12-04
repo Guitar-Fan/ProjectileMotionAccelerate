@@ -22,6 +22,7 @@ export class ControlsPanel {
 		gravity: 9.81,
 		airDensity: 1.0,
 		windX: 2,
+		windY: 0,
 		windZ: -1.5
 	};
 
@@ -31,6 +32,7 @@ export class ControlsPanel {
 		this.state.gravity = config.initialEnvironment.gravity;
 		this.state.airDensity = config.initialEnvironment.airDensity;
 		this.state.windX = config.initialEnvironment.windVector.x;
+		this.state.windY = config.initialEnvironment.windVector.y;
 		this.state.windZ = config.initialEnvironment.windVector.z;
 
 		this.pane = new Pane({ container: root, title: 'Launch Console' });
@@ -71,10 +73,13 @@ export class ControlsPanel {
 			.addBinding(this.state, 'airDensity', { min: 0.4, max: 1.4, step: 0.01, label: 'Air Density' })
 			.on('change', () => this.emitEnvironment());
 		envFolder
-			.addBinding(this.state, 'windX', { min: -12, max: 12, step: 0.1, label: 'Wind X' })
+			.addBinding(this.state, 'windX', { min: -12, max: 12, step: 0.1, label: 'Wind X (m/s)' })
 			.on('change', () => this.emitEnvironment());
 		envFolder
-			.addBinding(this.state, 'windZ', { min: -12, max: 12, step: 0.1, label: 'Wind Z' })
+			.addBinding(this.state, 'windY', { min: -8, max: 8, step: 0.1, label: 'Wind Y (m/s)' })
+			.on('change', () => this.emitEnvironment());
+		envFolder
+			.addBinding(this.state, 'windZ', { min: -12, max: 12, step: 0.1, label: 'Wind Z (m/s)' })
 			.on('change', () => this.emitEnvironment());
 
 		this.pane.addBlade({ view: 'separator' });
@@ -114,7 +119,7 @@ export class ControlsPanel {
 		return {
 			gravity: this.state.gravity,
 			airDensity: this.state.airDensity,
-			windVector: new THREE.Vector3(this.state.windX, 0, this.state.windZ)
+			windVector: new THREE.Vector3(this.state.windX, this.state.windY, this.state.windZ)
 		};
 	}
 }

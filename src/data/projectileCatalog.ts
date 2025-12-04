@@ -75,6 +75,13 @@ export const projectileCatalog: ProjectileDefinition[] = [
     dragCoefficient: 0.18,
     spinDamping: 0.4,
     restitution: 0.12,
+    radius: 0.25,
+    // Moment of inertia for solid cylinder/capsule: I = (1/12)m(3r² + h²) transverse, (1/2)mr² axial
+    momentOfInertia: new THREE.Vector3(
+      (1/12) * 12 * (3 * 0.25 * 0.25 + 0.9 * 0.9), // Ix
+      (1/12) * 12 * (3 * 0.25 * 0.25 + 0.9 * 0.9), // Iy
+      0.5 * 12 * 0.25 * 0.25 // Iz (axial)
+    ),
     meshFactory: makeShell
   },
   {
@@ -86,6 +93,13 @@ export const projectileCatalog: ProjectileDefinition[] = [
     dragCoefficient: 0.32,
     spinDamping: 0.9,
     restitution: 0.6,
+    radius: 0.32,
+    // Moment of inertia for hollow sphere: I = (2/3)mr²
+    momentOfInertia: new THREE.Vector3(
+      (2/3) * 0.45 * 0.32 * 0.32,
+      (2/3) * 0.45 * 0.32 * 0.32,
+      (2/3) * 0.45 * 0.32 * 0.32
+    ),
     meshFactory: (palette) => makeLeatherBall(palette, 0.32)
   },
   {
@@ -97,6 +111,13 @@ export const projectileCatalog: ProjectileDefinition[] = [
     dragCoefficient: 0.35,
     spinDamping: 0.8,
     restitution: 0.53,
+    radius: 0.18,
+    // Moment of inertia for solid sphere: I = (2/5)mr²
+    momentOfInertia: new THREE.Vector3(
+      (2/5) * 0.145 * 0.18 * 0.18,
+      (2/5) * 0.145 * 0.18 * 0.18,
+      (2/5) * 0.145 * 0.18 * 0.18
+    ),
     meshFactory: (palette) => makeLeatherBall(palette, 0.18)
   },
   {
@@ -108,6 +129,13 @@ export const projectileCatalog: ProjectileDefinition[] = [
     dragCoefficient: 0.12,
     spinDamping: 0.2,
     restitution: 0.08,
+    radius: 0.12,
+    // Moment of inertia for solid cone: I = (3/10)mr² transverse, (3/10)mr² axial
+    momentOfInertia: new THREE.Vector3(
+      (3/10) * 4.2 * 0.12 * 0.12,
+      (3/10) * 4.2 * 0.12 * 0.12,
+      (3/10) * 4.2 * 0.12 * 0.12
+    ),
     meshFactory: makeDart
   },
   {
@@ -119,6 +147,13 @@ export const projectileCatalog: ProjectileDefinition[] = [
     dragCoefficient: 0.28,
     spinDamping: 0.3,
     restitution: 0.35,
+    radius: 0.22,
+    // Moment of inertia for solid sphere: I = (2/5)mr²
+    momentOfInertia: new THREE.Vector3(
+      (2/5) * 2.6 * 0.22 * 0.22,
+      (2/5) * 2.6 * 0.22 * 0.22,
+      (2/5) * 2.6 * 0.22 * 0.22
+    ),
     meshFactory: makePlasma
   }
 ];

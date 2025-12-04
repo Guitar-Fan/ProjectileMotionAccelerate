@@ -16,6 +16,7 @@ export class SceneComposer {
   readonly composer: EffectComposer;
   readonly cameraRig: CameraRig;
   readonly lighting: LightingRig;
+  readonly lightingRig: LightingRig; // Alias for external access
   readonly environment: Environment;
   readonly particles: Particles;
   readonly assets: AssetLibrary;
@@ -37,6 +38,7 @@ export class SceneComposer {
     this.cameraRig = new CameraRig(this.renderer.domElement);
     this.environment = new Environment(this.scene, this.assets);
     this.lighting = new LightingRig(this.scene);
+    this.lightingRig = this.lighting; // Provide alias for external access
     this.particles = new Particles(this.scene);
 
     this.composer = new EffectComposer(this.renderer);

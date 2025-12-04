@@ -12,7 +12,7 @@ export class HUD {
     this.root.appendChild(grid);
     container.appendChild(this.root);
 
-    ['Altitude', 'Speed', 'Range', 'Max Height', 'Flight Time', 'Impact Speed'].forEach((label) => {
+    ['Altitude', 'Velocity X', 'Velocity Y', 'Velocity Z', 'Speed', 'Range', 'Max Height', 'Flight Time', 'Impact Speed'].forEach((label) => {
       const wrapper = document.createElement('div');
       const heading = document.createElement('span');
       heading.textContent = label.toUpperCase();
@@ -33,6 +33,9 @@ export class HUD {
   update(sample?: TelemetrySample, record?: LaunchRecord): void {
     if (sample) {
       this.labels['Altitude'].textContent = `${sample.altitude.toFixed(1)} m`;
+      this.labels['Velocity X'].textContent = `${sample.velocityX.toFixed(1)} m/s`;
+      this.labels['Velocity Y'].textContent = `${sample.velocityY.toFixed(1)} m/s`;
+      this.labels['Velocity Z'].textContent = `${sample.velocityZ.toFixed(1)} m/s`;
       this.labels['Speed'].textContent = `${sample.speed.toFixed(1)} m/s`;
       this.labels['Range'].textContent = `${sample.range.toFixed(1)} m`;
     }

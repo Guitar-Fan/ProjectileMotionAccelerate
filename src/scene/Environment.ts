@@ -13,12 +13,20 @@ export class Environment {
   }
 
   private buildGround(): void {
-    const geometry = new THREE.CircleGeometry(120, 120);
+    const geometry = new THREE.PlaneGeometry(10000, 10000);
     const material = new THREE.MeshStandardMaterial({
       map: this.assets.groundTexture,
       roughness: 0.95,
       metalness: 0.05
     });
+    
+    // Configure texture to repeat for infinite appearance
+    if (this.assets.groundTexture) {
+      this.assets.groundTexture.wrapS = THREE.RepeatWrapping;
+      this.assets.groundTexture.wrapT = THREE.RepeatWrapping;
+      this.assets.groundTexture.repeat.set(500, 500);
+    }
+    
     const mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
     mesh.receiveShadow = true;
