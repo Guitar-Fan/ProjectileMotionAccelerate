@@ -47,11 +47,17 @@ export interface EnvironmentState {
   airDensity: number;
 }
 
+export interface ManualLaunchConfig {
+  impulseVector: THREE.Vector3; // Total impulse (Force * time)
+  applicationPoint: THREE.Vector3; // Offset from center of mass
+}
+
 export interface LaunchParameters {
   profile: ForceProfile;
   projectile: ProjectileDefinition;
   environment: EnvironmentState;
   tint: THREE.Color;
+  manualConfig?: ManualLaunchConfig; // Optional override
 }
 
 export interface TelemetrySample {
@@ -62,6 +68,8 @@ export interface TelemetrySample {
   velocityX: number;
   velocityY: number;
   velocityZ: number;
+  positionX: number;
+  positionZ: number;
 }
 
 export interface LaunchRecord {

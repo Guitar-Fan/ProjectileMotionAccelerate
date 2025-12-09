@@ -1,0 +1,19 @@
+<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rail-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1320" />
+      <stop offset="100%" stop-color="#191f2e" />
+    </linearGradient>
+    <linearGradient id="rail-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6bf2ff" />
+      <stop offset="100%" stop-color="#4da5ff" />
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="28" fill="url(#rail-bg)" />
+  <rect x="40" y="96" width="92" height="18" rx="9" fill="#1f293d" stroke="#6bf2ff" stroke-width="2" />
+  <rect x="52" y="70" width="68" height="12" rx="6" fill="#2c3b5b" />
+  <rect x="56" y="74" width="60" height="4" rx="2" fill="url(#rail-glow)" />
+  <path d="M52 102 L110 74" stroke="#6bf2ff" stroke-width="4" stroke-linecap="round" />
+  <circle cx="124" cy="70" r="10" fill="#f5f2ff" stroke="#6bf2ff" stroke-width="3" />
+  <circle cx="124" cy="70" r="5" fill="#15192a" />
+</svg>

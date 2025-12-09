@@ -10,13 +10,20 @@ import {
 } from './types';
 import { dragForce, gravityForce, integrateSpin, magnusForce, integrateRotation, aerodynamicTorque } from './forces';
 import { rk4Integrate } from './integrators';
-import { MAX_TIME_STEP, MIN_TIME_STEP } from './constants';
+import { MAX_TIME_STEP, MIN_TIME_STEP, ERROR_TOLERANCE } from './constants';
+import { TurbulenceField } from './turbulence';
 
 const MAX_TRAIL_POINTS = 360;
 const REST_THRESHOLD = 0.15; // Lower threshold for more accurate settling
 const TELEMETRY_INTERVAL = 0.08;
 const ROLLING_FRICTION_COEFF = 0.02; // Rolling friction coefficient
 const GROUND_CONTACT_TOLERANCE = 0.005; // How close to ground counts as contact
+
+// Variable surface properties
+interface SurfaceProperties {
+  friction: number;
+  restitution: number;
+}
 
 interface ProjectileInstance {
   id: string;
@@ -52,16 +59,30 @@ export class SimulationEngine {
   private projectiles: ProjectileInstance[] = [];
   private records: LaunchRecord[] = [];
   private idCounter = 0;
+  private turbulence: TurbulenceField;
+  private globalTime: number = 0;
+  private surfaceProps: SurfaceProperties = {
+    friction: 0.6, // Grass/dirt
+    restitution: 0.5
+  };
 
   constructor(scene: THREE.Scene, palette: MaterialPalette) {
     this.scene = scene;
     this.palette = palette;
+    this.turbulence = new TurbulenceField();
   }
 
   getActiveProjectiles(): Array<{ id: string; position: THREE.Vector3; color: number }> {
     return this.projectiles
       .filter(p => p.active)
       .map(p => ({ id: p.id, position: p.state.position.clone(), color: p.colorHex }));
+  }
+
+  spawnPreview(projectileDef: any): THREE.Object3D {
+    const mesh = projectileDef.meshFactory(this.palette);
+    mesh.position.set(0, 1.5, 0); // Default spawn height
+    this.scene.add(mesh);
+    return mesh;
   }
 
   launch(params: LaunchParameters): LaunchHandle {
@@ -96,6 +117,25 @@ export class SimulationEngine {
       momentOfInertia: params.projectile.momentOfInertia.clone(),
       radius: params.projectile.radius
     };
+
+    // Apply manual configuration if present
+    if (params.manualConfig) {
+      // Linear velocity change: Δv = J / m
+      const deltaV = params.manualConfig.impulseVector.clone().multiplyScalar(1 / state.mass);
+      state.velocity.add(deltaV);
+
+      // Angular velocity change: Δω = I⁻¹(r × J)
+      // r is vector from COM to application point
+      const r = params.manualConfig.applicationPoint;
+      const torqueImpulse = new THREE.Vector3().crossVectors(r, params.manualConfig.impulseVector);
+      
+      const deltaOmega = new THREE.Vector3(
+        torqueImpulse.x / state.momentOfInertia.x,
+        torqueImpulse.y / state.momentOfInertia.y,
+        torqueImpulse.z / state.momentOfInertia.z
+      );
+      state.spin.add(deltaOmega);
+    }
 
     const envCopy: EnvironmentState = {
       gravity: params.environment.gravity,
@@ -137,9 +177,27 @@ export class SimulationEngine {
     // Speed up simulation by 1.5x
     const speedMultiplier = 1.5;
     const clamped = Math.min(dt * speedMultiplier, MAX_TIME_STEP);
+    
+    // Update turbulence field
+    this.turbulence.update(clamped);
+    this.globalTime += clamped;
+    
+    // Adaptive time stepping
     let accumulator = clamped;
     while (accumulator > 0) {
-      const step = Math.min(accumulator, MIN_TIME_STEP);
+      // Calculate optimal timestep based on projectile velocities
+      let minStep = MAX_TIME_STEP;
+      this.projectiles.forEach(p => {
+        if (p.active) {
+          const speed = p.state.velocity.length();
+          // Smaller steps for faster projectiles or near-ground collisions
+          const velStep = speed > 50 ? MIN_TIME_STEP : MIN_TIME_STEP * 2;
+          const heightStep = p.state.position.y < 2 * p.state.radius ? MIN_TIME_STEP : MAX_TIME_STEP;
+          minStep = Math.min(minStep, velStep, heightStep);
+        }
+      });
+      
+      const step = Math.min(accumulator, minStep);
       this.projectiles.forEach((projectile) => this.integrateProjectile(projectile, step));
       accumulator -= step;
     }
@@ -150,13 +208,43 @@ export class SimulationEngine {
     return this.records;
   }
 
+  setSurfaceType(type: 'grass' | 'concrete' | 'dirt' | 'ice'): void {
+    switch (type) {
+      case 'grass':
+        this.surfaceProps = { friction: 0.6, restitution: 0.5 };
+        break;
+      case 'concrete':
+        this.surfaceProps = { friction: 0.8, restitution: 0.7 };
+        break;
+      case 'dirt':
+        this.surfaceProps = { friction: 0.7, restitution: 0.4 };
+        break;
+      case 'ice':
+        this.surfaceProps = { friction: 0.1, restitution: 0.9 };
+        break;
+    }
+  }
+
+  private getGroundNormal(x: number, z: number): THREE.Vector3 {
+    // Perturb normal to simulate grass/uneven ground (Physics Bump Mapping)
+    // Use simple hash of position for determinism
+    const scale = 0.8; // Scale of bumps
+    const roughness = 0.15; // Magnitude of perturbation (increased for visibility)
+    
+    const nx = (Math.sin(x * scale) + Math.cos(z * scale * 1.3)) * roughness;
+    const nz = (Math.cos(x * scale * 1.1) + Math.sin(z * scale * 0.9)) * roughness;
+    
+    return new THREE.Vector3(nx, 1, nz).normalize();
+  }
+
   private integrateProjectile(projectile: ProjectileInstance, dt: number): void {
     if (!projectile.active) return;
 
     projectile.elapsed += dt;
     projectile.telemetryTimer += dt;
 
-    if (projectile.elapsed <= projectile.params.profile.duration) {
+    // Only apply profile force if NOT manual config (manual is instantaneous impulse at t=0)
+    if (!projectile.params.manualConfig && projectile.elapsed <= projectile.params.profile.duration) {
       const force = projectile.params.profile.impulse(projectile.elapsed);
       if (force.lengthSq() > 0) {
         const acceleration = force.multiplyScalar(1 / projectile.state.mass);
@@ -164,6 +252,12 @@ export class SimulationEngine {
       }
       projectile.state.spin.addScaledVector(projectile.params.profile.spinAxis, projectile.params.profile.spinRate * dt);
     }
+
+    // Apply turbulent wind with gusts
+    const baseWind = projectile.environment.windVector.clone();
+    const turbulentWind = this.turbulence.getTurbulence(projectile.state.position, baseWind);
+    const gust = this.turbulence.addGust(projectile.state.position, this.globalTime);
+    projectile.environment.windVector = turbulentWind.add(gust);
 
     // Check if object is on ground (within tolerance)
     const groundDistance = projectile.state.position.y - projectile.state.radius;
@@ -177,6 +271,9 @@ export class SimulationEngine {
     // RK4 integration following state space formulation (Equation 15)
     // Returns acceleration directly since forces already divided by mass
     rk4Integrate(projectile.state, projectile.environment, dt, totalAcceleration);
+    
+    // Restore original wind after integration
+    projectile.environment.windVector = baseWind;
     
     // Update angular velocity with aerodynamic torque: dω/dt = τ/I
     const torque = aerodynamicTorque(projectile.state, projectile.environment);
@@ -217,7 +314,9 @@ export class SimulationEngine {
         speed: projectile.state.velocity.length(),
         velocityX: projectile.state.velocity.x,
         velocityY: projectile.state.velocity.y,
-        velocityZ: projectile.state.velocity.z
+        velocityZ: projectile.state.velocity.z,
+        positionX: projectile.state.position.x,
+        positionZ: projectile.state.position.z
       });
     }
 
@@ -244,29 +343,33 @@ export class SimulationEngine {
   private applyGroundContactForces(projectile: ProjectileInstance, dt: number): void {
     const state = projectile.state;
     
-    // Keep object exactly on ground
+    // Keep object exactly on ground (visual plane)
     state.position.y = state.radius;
     
-    // Cancel any downward velocity
-    if (state.velocity.y < 0) {
-      state.velocity.y = 0;
+    // Get local ground normal
+    const normal = this.getGroundNormal(state.position.x, state.position.z);
+
+    // Cancel velocity into the ground
+    const vn = state.velocity.dot(normal);
+    if (vn < 0) {
+      state.velocity.addScaledVector(normal, -vn);
     }
     
     // Calculate contact point velocity including rotation
-    const normal = new THREE.Vector3(0, 1, 0);
     const contactOffset = normal.clone().multiplyScalar(-state.radius);
     const rotationalVel = new THREE.Vector3().crossVectors(state.spin, contactOffset);
     const contactVel = state.velocity.clone().add(rotationalVel);
     
-    // Get horizontal velocity
-    const horizontalVel = new THREE.Vector3(contactVel.x, 0, contactVel.z);
-    const speed = horizontalVel.length();
+    // Get tangential velocity (velocity along the surface)
+    const normalVel = normal.clone().multiplyScalar(contactVel.dot(normal));
+    const tangentialVel = contactVel.clone().sub(normalVel);
+    const speed = tangentialVel.length();
     
     if (speed > 0.01) {
       // Apply rolling friction: F_roll = μ_roll × N × v̂
-      // Normal force N = mg (cancels gravity)
+      // Normal force N approx mg (ignoring slope for simple rolling friction magnitude)
       const normalForce = state.mass * projectile.environment.gravity;
-      const rollingFriction = horizontalVel.clone().normalize().multiplyScalar(
+      const rollingFriction = tangentialVel.clone().normalize().multiplyScalar(
         -ROLLING_FRICTION_COEFF * normalForce
       );
       
@@ -287,8 +390,7 @@ export class SimulationEngine {
     // Apply damping to prevent perpetual rolling
     const dampingFactor = Math.exp(-2.0 * dt);
     if (speed < 0.5) {
-      state.velocity.x *= dampingFactor;
-      state.velocity.z *= dampingFactor;
+      state.velocity.multiplyScalar(dampingFactor);
       state.spin.multiplyScalar(dampingFactor);
     }
   }
@@ -296,10 +398,10 @@ export class SimulationEngine {
   private handleGroundCollision(projectile: ProjectileInstance): void {
     const state = projectile.state;
     
-    // Surface normal (ground is flat, normal points up)
-    const normal = new THREE.Vector3(0, 1, 0);
+    // Get local ground normal (Physics Bump Mapping)
+    const normal = this.getGroundNormal(state.position.x, state.position.z);
     
-    // Contact point is at the bottom of the object
+    // Contact point is at the bottom of the object relative to the normal
     const contactOffset = normal.clone().multiplyScalar(-state.radius);
     
     // Calculate velocity at contact point: v_contact = v_center + ω × r_contact
@@ -319,7 +421,11 @@ export class SimulationEngine {
     const tangentialVel = contactVel.clone().sub(normalVel);
     const tangentialSpeed = tangentialVel.length();
     
-    // Calculate normal impulse magnitude with restitution
+    // Velocity-dependent restitution (energy dissipation increases with impact speed)
+    const impactSpeed = Math.abs(vn);
+    const effectiveRestitution = state.restitution * Math.exp(-impactSpeed / 20.0);
+    
+    // Calculate normal impulse magnitude with velocity-dependent restitution
     // Jn = -(1 + e) * vn / (1/m + (r × n)·(I⁻¹(r × n)))
     const rCrossN = new THREE.Vector3().crossVectors(contactOffset, normal);
     const angularEffect = new THREE.Vector3(
@@ -329,10 +435,10 @@ export class SimulationEngine {
     );
     const rCrossAngular = new THREE.Vector3().crossVectors(contactOffset, angularEffect);
     const denominator = 1 / state.mass + rCrossAngular.dot(normal);
-    const jn = -(1 + state.restitution) * vn / denominator;
+    const jn = -(1 + effectiveRestitution) * vn / denominator;
     
-    // Calculate friction impulse (Coulomb friction with friction coefficient)
-    const frictionCoeff = 0.6;
+    // Calculate friction impulse (surface-dependent Coulomb friction)
+    const frictionCoeff = this.surfaceProps.friction;
     const maxFriction = frictionCoeff * Math.abs(jn);
     
     let jt = 0;

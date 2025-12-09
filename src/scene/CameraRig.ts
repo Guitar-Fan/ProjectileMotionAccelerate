@@ -25,6 +25,16 @@ export class CameraRig {
     this.target = target;
   }
 
+  setSideView(): void {
+    // Position camera for a "2D side view" (looking along Z axis)
+    // We keep it perspective but flatten the angle
+    this.target = null;
+    this.camera.position.set(0, 1.5, 12); // Side view (Z-axis offset)
+    this.camera.lookAt(0, 1.5, 0);
+    this.controls.target.set(0, 1.5, 0);
+    this.controls.update();
+  }
+
   update(delta: number): void {
     if (this.target) {
       this.desired.copy(this.target.position).add(this.followOffset);

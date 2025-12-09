@@ -13,6 +13,8 @@ import { projectileCatalog } from './data/projectileCatalog';
 import { environmentPresets } from './data/environmentPresets';
 import { EnvironmentState, LaunchRecord } from './physics/types';
 
+import { InteractionManager } from './scene/InteractionManager';
+
 const appRoot = document.getElementById('app');
 const uiRoot = document.getElementById('ui-root');
 const hudCanvas = document.getElementById('hud-layer') as HTMLCanvasElement;
@@ -24,6 +26,23 @@ if (!appRoot || !uiRoot || !hudCanvas) {
 const composer = new SceneComposer(appRoot);
 const simulation = new SimulationEngine(composer.scene, composer.assets.palette);
 let environment: EnvironmentState = environmentPresets[0];
+
+// Interaction Manager for 3D Object Manipulation
+const interactionManager = new InteractionManager(composer.scene, composer.cameraRig.camera, appRoot);
+
+// Spawn initial preview object
+let previewMesh = simulation.spawnPreview(projectileCatalog[1]); // Default ball
+interactionManager.setTarget(previewMesh);
+
+// Set camera to side view initially
+composer.cameraRig.setSideView();
+
+// Manual configuration state
+let manualConfig: { impact: THREE.Vector3, impulse: THREE.Vector3 } | null = null;
+
+interactionManager.onManualConfigChange = (impact, impulse) => {
+  manualConfig = { impact, impulse };
+};
 
 // Top-right container for force icons
 const legendHost = document.createElement('div');
@@ -89,6 +108,12 @@ controls = new ControlsPanel(controlsHost, {
   initialEnvironment: environment,
   onLaunch: ({ force, projectile, tint, environment: env }) => {
     environment = env;
+    
+    // Remove preview mesh before launch
+    if (previewMesh) {
+      composer.scene.remove(previewMesh);
+    }
+
     const handle = simulation.launch({
       profile: force,
       projectile,
@@ -97,15 +122,30 @@ controls = new ControlsPanel(controlsHost, {
         airDensity: env.airDensity,
         windVector: env.windVector.clone()
       },
-      tint: new THREE.Color(tint)
+      tint: new THREE.Color(tint),
+      manualConfig: manualConfig ? {
+        impulseVector: manualConfig.impulse,
+        applicationPoint: manualConfig.impact
+      } : undefined
     });
+    
+    // Track camera
     composer.setTrackingTarget(handle.object);
-    activeRecord = handle.record;
+    
+    // Add to timeline
+    timeline.addTrack(handle.record);
+    
+    // Reset manual config after launch
+    manualConfig = null;
   },
-  onEnvironmentChange: (env) => {
-    environment = env;
-  },
-  onForceHover: (profile) => legend.highlightById(profile.id)
+  onProjectileChange: (proj) => {
+    // Update preview mesh
+    if (previewMesh) {
+      composer.scene.remove(previewMesh);
+    }
+    previewMesh = simulation.spawnPreview(proj);
+    interactionManager.setTarget(previewMesh);
+  }
 });
 
 const hud = new HUD(document.body);

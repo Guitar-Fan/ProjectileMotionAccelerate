@@ -39,7 +39,7 @@ export class SceneComposer {
     this.environment = new Environment(this.scene, this.assets);
     this.lighting = new LightingRig(this.scene);
     this.lightingRig = this.lighting; // Provide alias for external access
-    this.particles = new Particles(this.scene);
+    this.particles = new Particles(this.scene, this.assets);
 
     this.composer = new EffectComposer(this.renderer);
     const renderPass = new RenderPass(this.scene, this.cameraRig.camera);

@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import { AssetLibrary } from '../assets/proceduralTextures';
 
 export class Particles {
   private group: THREE.Points;
   private velocities: Float32Array;
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, assets: AssetLibrary) {
     const count = 200;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
@@ -20,9 +21,12 @@ export class Particles {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const material = new THREE.PointsMaterial({
       color: '#6bf2ff',
-      size: 0.08,
+      size: 0.3, // Increased size for texture visibility
+      map: assets.glowTexture,
       transparent: true,
-      opacity: 0.85
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
     this.group = new THREE.Points(geometry, material);
     scene.add(this.group);

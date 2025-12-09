@@ -12,6 +12,7 @@ interface ControlsConfig {
 	onEnvironmentChange: (environment: EnvironmentState) => void;
 	onForceHover?: (profile: ForceProfile) => void;
 	onProjectileChange?: (projectile: ProjectileDefinition) => void;
+	onSurfaceChange?: (surface: 'grass' | 'concrete' | 'dirt' | 'ice') => void;
 }
 
 export class ControlsPanel {
@@ -23,7 +24,8 @@ export class ControlsPanel {
 		airDensity: 1.0,
 		windX: 2,
 		windY: 0,
-		windZ: -1.5
+		windZ: -1.5,
+		surface: 'grass' as 'grass' | 'concrete' | 'dirt' | 'ice'
 	};
 
 	constructor(root: HTMLElement, private config: ControlsConfig) {
@@ -81,6 +83,18 @@ export class ControlsPanel {
 		envFolder
 			.addBinding(this.state, 'windZ', { min: -12, max: 12, step: 0.1, label: 'Wind Z (m/s)' })
 			.on('change', () => this.emitEnvironment());
+		
+		const surfaceOptions = {
+			'Grass': 'grass',
+			'Concrete': 'concrete',
+			'Dirt': 'dirt',
+			'Ice': 'ice'
+		};
+		envFolder
+			.addBinding(this.state, 'surface', { options: surfaceOptions, label: 'Surface Type' })
+			.on('change', (ev: any) => {
+				this.config.onSurfaceChange?.(ev.value);
+			});
 
 		this.pane.addBlade({ view: 'separator' });
 
@@ -121,5 +135,12 @@ export class ControlsPanel {
 			airDensity: this.state.airDensity,
 			windVector: new THREE.Vector3(this.state.windX, this.state.windY, this.state.windZ)
 		};
+	}
+
+	getSettings() {
+		const force = this.config.forces.find((f) => f.id === this.state.forceId) ?? this.config.forces[0];
+		const projectile = this.config.projectiles.find((p) => p.id === this.state.projectileId) ?? this.config.projectiles[0];
+		const tint = chroma.mix('#6bf2ff', '#f6b36b', Math.random() * 0.6).hex();
+		return { force, projectile, tint };
 	}
 }
