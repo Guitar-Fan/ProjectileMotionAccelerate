@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elite Free Kick Lab</title>
+
+  <!-- Debug Console -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Three.js Stack (same generation as Golf simulator) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Animation helper (GSAP) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #050912;
+      --panel: rgba(8, 14, 32, 0.8);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #21d4fd;
+      --accent-2: #b721ff;
+      --text: #f5f7ff;
+      --muted: #93a3c3;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: radial-gradient(circle at top, #101d42 0%, #050912 55%, #03050a 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
+      height: 100vh;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+    }
+
+    .panel.right-panel {
+      border-left: 1px solid var(--border);
+      border-right: none;
+    }
+
+    .panel h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .panel section {
+      margin-bottom: 1.75rem;
+    }
+
+    .panel h2 {
+      font-size: 0.95rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+
+    .slider-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    label span {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+    }
+
+    input[type="range"],
+    input[type="number"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 12px rgba(33, 212, 253, 0.6);
+      cursor: pointer;
+    }
+
+    input[type="number"] {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem;
+      background: rgba(4, 7, 16, 0.6);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      margin-bottom: 0.8rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #030507;
+      box-shadow: 0 12px 25px rgba(33, 212, 253, 0.25);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 15px 25px rgba(33, 212, 253, 0.35);
+    }
+
+    .glow-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .viewport {
+      position: relative;
+      background: radial-gradient(circle at top, rgba(33, 212, 253, 0.12), transparent 50%);
+    }
+
+    #sim-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .telemetry {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      width: 240px;
+      padding: 1rem;
+      border-radius: 14px;
+      background: rgba(5, 8, 18, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .telemetry h3 {
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+    }
+
+    .telemetry-line {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.35rem;
+      color: var(--muted);
+    }
+
+    canvas#trail-overlay,
+    canvas#trace-designer {
+      position: absolute;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 480px;
+      height: 140px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(5, 8, 18, 0.75);
+      z-index: 4;
+    }
+
+    canvas#trace-designer {
+      width: 520px;
+      height: 220px;
+      bottom: auto;
+      top: 1.25rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 6;
+    }
+
+    body.trace-mode canvas#trace-designer {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="panel">
+      <h1>Free Kick Lab</h1>
+      <section>
+        <h2>Strike Geometry</h2>
+        <div class="slider-group">
+          <label>Elevation (deg) <span id="elevation-value">26</span></label>
+          <input type="range" id="elevation" min="0" max="65" value="26" />
+        </div>
+        <div class="slider-group">
+          <label>Curve / Aim (deg) <span id="azimuth-value">0</span></label>
+          <input type="range" id="azimuth" min="-40" max="40" value="0" />
+        </div>
+        <div class="slider-group">
+          <label>Impact Spin (rpm) <span id="spin-value">3200</span></label>
+          <input type="range" id="spin" min="-6000" max="6000" value="3200" />
+        </div>
+      </section>
+
+      <section>
+        <h2>Energy + Conditions</h2>
+        <div class="slider-group">
+          <label>Strike Speed (m/s) <span id="speed-value">29</span></label>
+          <input type="range" id="speed" min="10" max="40" value="29" />
+        </div>
+        <div class="slider-group">
+          <label>Wind Speed (m/s) <span id="wind-speed-value">2</span></label>
+          <input type="range" id="wind-speed" min="-10" max="10" value="2" />
+        </div>
+        <div class="slider-group">
+          <label>Wind Direction (deg) <span id="wind-dir-value">0</span></label>
+          <input type="range" id="wind-dir" min="0" max="360" value="0" />
+        </div>
+        <div class="slider-group">
+          <label>Ball Elasticity <span id="elasticity-value">0.45</span></label>
+          <input type="range" id="ball-elasticity" min="0.15" max="0.9" step="0.01" value="0.45" />
+        </div>
+      </section>
+
+      <button class="secondary" id="trace-mode-btn">Trace Trajectory Mode</button>
+      <button class="primary" id="kick-btn">Strike Ball</button>
+      <button class="secondary" id="reset-btn">Reset Pitch</button>
+    </aside>
+
+    <main class="viewport">
+      <div id="sim-canvas"></div>
+      <div class="telemetry" id="telemetry">
+        <h3>Telemetry</h3>
+        <div class="telemetry-line"><span>Speed</span><span id="telemetry-speed">0 m/s</span></div>
+        <div class="telemetry-line"><span>Launch</span><span id="telemetry-angle">0°</span></div>
+        <div class="telemetry-line"><span>Curve</span><span id="telemetry-curve">0°</span></div>
+        <div class="telemetry-line"><span>Apex</span><span id="telemetry-apex">0 m</span></div>
+        <div class="telemetry-line"><span>Carry</span><span id="telemetry-carry">0 m</span></div>
+        <div class="telemetry-line"><span>Total</span><span id="telemetry-total">0 m</span></div>
+        <div class="telemetry-line"><span>Hang</span><span id="telemetry-hang">0 s</span></div>
+        <div class="telemetry-line"><span>Spin</span><span id="telemetry-spin">0 rpm</span></div>
+      </div>
+      <canvas id="trace-designer" width="520" height="220"></canvas>
+      <canvas id="trail-overlay" width="480" height="140"></canvas>
+    </main>
+
+    <aside class="panel right-panel">
+      <h1>Advanced</h1>
+      <section>
+        <h2>Ballistics Model</h2>
+        <div class="glow-card">
+          <div class="stat-value" id="model-name">FIFA 2025</div>
+          <div class="stat-label">4th-order RK + Reynolds drag + Magnus lift</div>
+        </div>
+        <div class="glow-card">
+          <div class="stat-value" id="air-density">1.20 kg/m³</div>
+          <div class="stat-label">Air density @ sea level</div>
+        </div>
+        <div class="glow-card">
+          <div class="stat-value" id="pitch-coeff">0.62 μ</div>
+          <div class="stat-label">Turf friction coefficient</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Shot Log</h2>
+        <div class="glow-card" id="shot-log" style="min-height: 180px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted);">
+          Awaiting strike data...
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script src="./soccer-simulator.js"></script>
+</body>
+</html>
