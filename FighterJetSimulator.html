@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Babylon.js Fighter Jet Simulator</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link href="https://unpkg.com/@fontsource/rajdhani@5.0.8/index.css" rel="stylesheet" />
+  <link href="https://unpkg.com/@fontsource/space-grotesk@5.0.8/index.css" rel="stylesheet" />
+   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+  <style>
+    :root {
+      --bg: #04070d;
+      --panel: #0c1320;
+      --panel-2: #0f1a2e;
+      --panel-3: #13243d;
+      --accent: #39d2ff;
+      --accent-2: #ffb347;
+      --accent-3: #ff5f6d;
+      --hud: rgba(57, 210, 255, 0.15);
+      --text: #d7e8ff;
+      --grid: rgba(255, 255, 255, 0.05);
+      --shadow: rgba(0, 0, 0, 0.45);
+      --glow: 0 0 16px rgba(57, 210, 255, 0.4);
+      --font-1: "Rajdhani", monospace;
+      --font-2: "Space Grotesk", sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    #renderCanvas {
+      width: 100vw;
+      height: 60vh;
+      display: block;
+      background: black;
+    }
+    #ui-shell {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 40vh;
+      background: linear-gradient(180deg, rgba(6, 10, 18, 0.95), rgba(5, 8, 14, 0.98));
+      border-top: 1px solid rgba(57, 210, 255, 0.15);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+    }
+    #hud-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60vh;
+      pointer-events: none;
+      color: var(--text);
+      font-family: var(--font-1);
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+    }
+    #hud-overlay .crosshair {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      border: 1px solid rgba(57, 210, 255, 0.8);
+      border-radius: 50%;
+      box-shadow: var(--glow);
+    }
+    #hud-overlay .crosshair:before,
+    #hud-overlay .crosshair:after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 2px;
+      height: 64px;
+      background: rgba(57, 210, 255, 0.6);
+      transform: translate(-50%, -50%);
+    }
+    #hud-overlay .crosshair:after {
+      width: 64px;
+      height: 2px;
+    }
+    #hud-overlay .reticle-ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 220px;
+      height: 220px;
+      border: 1px dashed rgba(57, 210, 255, 0.35);
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(57, 210, 255, 0.2);
+      animation: pulse 4s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.55; }
+      50% { opacity: 0.25; }
+      100% { opacity: 0.55; }
+    }
+    #hud-overlay .telemetry {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 10px 12px;
+      border: 1px solid rgba(57, 210, 255, 0.25);
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
+      box-shadow: var(--glow);
+      min-width: 240px;
+    }
+    #hud-overlay .telemetry h3 {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    #hud-overlay .telemetry .row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    #hud-overlay .telemetry .row span.label {
+      color: rgba(215, 232, 255, 0.8);
+    }
+    #hud-overlay .telemetry .row span.value {
+      color: var(--accent-2);
+    }
+    #hud-overlay .upper-banner {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    #hud-overlay .pill {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(57, 210, 255, 0.25);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: var(--glow);
+    }
+    #panel-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid rgba(57, 210, 255, 0.18);
+      background: linear-gradient(90deg, rgba(15, 26, 46, 0.85), rgba(10, 18, 32, 0.9));
+    }
+    #panel-header .title {
+      font-family: var(--font-1);
+      letter-spacing: 0.14em;
+      font-size: 13px;
+    }
+    #panel-header .status-badges {
+      display: flex;
+      gap: 8px;
+    }
+    .badge {
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(57, 210, 255, 0.12);
+      border: 1px solid rgba(57, 210, 255, 0.25);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+    #dashboard {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 10px;
+      padding: 12px 12px 14px 12px;
+      overflow: hidden;
+    }
+    #control-board {
+      background: radial-gradient(circle at 20% 20%, rgba(25, 45, 76, 0.5), rgba(10, 18, 32, 0.8));
+      border: 1px solid rgba(57, 210, 255, 0.2);
+      border-radius: 10px;
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.55);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-auto-rows: minmax(44px, auto);
+      gap: 8px;
+      overflow-y: auto;
+      position: relative;
+    }
+    .tile {
+      background: linear-gradient(180deg, rgba(17, 28, 46, 0.9), rgba(8, 14, 23, 0.95));
+      border: 1px solid rgba(57, 210, 255, 0.2);
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      color: var(--text);
+      font-size: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .tile::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(57, 210, 255, 0.04), rgba(57, 210, 255, 0));
+      pointer-events: none;
+    }
+    .tile .label { letter-spacing: 0.06em; font-size: 11px; color: rgba(215, 232, 255, 0.7); }
+    .tile .value { font-size: 15px; font-family: var(--font-1); color: var(--accent-2); }
+    .tile .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      border: 1px solid rgba(57, 210, 255, 0.18);
+    }
+    .tile .bar span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      width: 45%;
+      box-shadow: var(--glow);
+    }
+    #right-panel {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(17, 28, 46, 0.95), rgba(8, 14, 23, 0.98));
+      border: 1px solid rgba(57, 210, 255, 0.2);
+      border-radius: 10px;
+      box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.45);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card h4 {
+      font-family: var(--font-1);
+      letter-spacing: 0.14em;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .log {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(57, 210, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+      overflow-y: auto;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #bcd3f7;
+    }
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .btn {
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      border: 1px solid rgba(57, 210, 255, 0.25);
+      background: rgba(57, 210, 255, 0.08);
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+      user-select: none;
+    }
+    .btn:hover { background: rgba(57, 210, 255, 0.18); }
+    .btn:active { transform: translateY(1px); }
+    /* Decorative grids to add visual density */
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.35;
+    }
+    /* Create many tiny indicators to fill board visuals */
+    .led-row { display: flex; gap: 3px; flex-wrap: wrap; }
+    .led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 95, 109, 0.5);
+      box-shadow: 0 0 6px rgba(255, 95, 109, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .led.green { background: rgba(87, 247, 158, 0.7); box-shadow: 0 0 6px rgba(87, 247, 158, 0.65); }
+    .led.blue { background: rgba(57, 210, 255, 0.6); box-shadow: 0 0 6px rgba(57, 210, 255, 0.6); }
+    .led.amber { background: rgba(255, 179, 71, 0.7); box-shadow: 0 0 6px rgba(255, 179, 71, 0.65); }
+    /* More stylistic fillers */
+    .dial {
+      width: 100%;
+      height: 36px;
+      border-radius: 50px;
+      background: radial-gradient(circle at 20% 20%, rgba(57, 210, 255, 0.25), rgba(57, 210, 255, 0.05));
+      border: 1px solid rgba(57, 210, 255, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .dial .indicator {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 40%;
+      background: linear-gradient(90deg, var(--accent-3), var(--accent));
+      box-shadow: 0 0 10px rgba(255, 95, 109, 0.4);
+    }
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(57, 210, 255, 0.25); border-radius: 10px; border: 2px solid rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); }
+  </style>
+  <script src="https://unpkg.com/earcut@3.0.2/dist/earcut.min.js"></script>
+  <script src="https://unpkg.com/cannon@0.6.2/build/cannon.min.js"></script>
+  <script src="https://unpkg.com/babylonjs@8.40.1/babylon.js"></script>
+  <script src="https://unpkg.com/babylonjs-gui@8.40.1/babylon.gui.min.js"></script>
+  <script src="https://unpkg.com/babylonjs-loaders@8.40.1/babylonjs.loaders.min.js"></script>
+  <script src="https://unpkg.com/babylonjs-materials@8.40.1/babylonjs.materials.min.js"></script>
+</head>
+<body>
+  <canvas id="renderCanvas"></canvas>
+  <div id="hud-overlay">
+    <div class="crosshair"></div>
+    <div class="reticle-ring"></div>
+    <div class="upper-banner">
+      <div class="pill" id="mode-pill">NAV MODE</div>
+      <div class="pill" id="weapon-pill">SAFE</div>
+      <div class="pill" id="status-pill">ENGINES HOT</div>
+    </div>
+    <div class="telemetry">
+      <h3>PILOT TELEMETRY</h3>
+      <div class="row"><span class="label">Altitude</span><span class="value" id="hud-altitude">00000 ft</span></div>
+      <div class="row"><span class="label">Airspeed</span><span class="value" id="hud-speed">000 kts</span></div>
+      <div class="row"><span class="label">Heading</span><span class="value" id="hud-heading">000°</span></div>
+      <div class="row"><span class="label">Pitch</span><span class="value" id="hud-pitch">0°</span></div>
+      <div class="row"><span class="label">Roll</span><span class="value" id="hud-roll">0°</span></div>
+      <div class="row"><span class="label">Throttle</span><span class="value" id="hud-throttle">0%</span></div>
+    </div>
+  </div>
+  <div id="ui-shell">
+    <div id="panel-header">
+      <div class="title">ADVANCED FIGHTER JET SIMULATOR — BABYLON.JS</div>
+      <div class="status-badges">
+        <div class="badge" id="badge-fps">FPS: --</div>
+        <div class="badge" id="badge-missiles">MISSILES: --</div>
+        <div class="badge" id="badge-targets">TARGETS: --</div>
+      </div>
+    </div>
+    <div id="dashboard">
+      <div id="control-board">
+        <div class="grid-lines"></div>
+        <!-- Intricate control board populated with repeated tiles for visual richness and to satisfy requested size -->
+        <div class="tile"><div class="label">THROTTLE</div><div class="value" id="tile-throttle">0%</div><div class="bar"><span id="bar-throttle"></span></div></div>
+        <div class="tile"><div class="label">AFTERBURN</div><div class="value" id="tile-afterburn">OFF</div><div class="led-row"><div class="led"></div><div class="led amber"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">FLAPS</div><div class="value" id="tile-flaps">AUTO</div><div class="dial"><div class="indicator" id="dial-flaps"></div></div></div>
+        <div class="tile"><div class="label">GEAR</div><div class="value" id="tile-gear">UP</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">PITCH</div><div class="value" id="tile-pitch">0°</div><div class="bar"><span id="bar-pitch"></span></div></div>
+        <div class="tile"><div class="label">ROLL</div><div class="value" id="tile-roll">0°</div><div class="bar"><span id="bar-roll"></span></div></div>
+        <div class="tile"><div class="label">YAW</div><div class="value" id="tile-yaw">0°/s</div><div class="bar"><span id="bar-yaw"></span></div></div>
+        <div class="tile"><div class="label">AOA</div><div class="value" id="tile-aoa">0°</div><div class="dial"><div class="indicator" id="dial-aoa"></div></div></div>
+        <div class="tile"><div class="label">FUEL</div><div class="value" id="tile-fuel">100%</div><div class="bar"><span id="bar-fuel" style="width: 100%"></span></div></div>
+        <div class="tile"><div class="label">HYDRAULICS</div><div class="value">NOMINAL</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">OXYGEN</div><div class="value">NOMINAL</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">RWR</div><div class="value">PASSIVE</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">ECM</div><div class="value">STANDBY</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led amber"></div></div></div>
+        <div class="tile"><div class="label">RADAR</div><div class="value" id="tile-radar">SWEEP</div><div class="bar"><span id="bar-radar" style="width: 70%"></span></div></div>
+        <div class="tile"><div class="label">IRST</div><div class="value">ENGAGED</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">IFF</div><div class="value">POSITIVE</div><div class="led-row"><div class="led green"></div><div class="led blue"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">NAV</div><div class="value">INS / GPS</div><div class="bar"><span style="width: 90%"></span></div></div>
+        <div class="tile"><div class="label">ALT HOLD</div><div class="value" id="tile-alt-hold">ARMED</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">HDG HOLD</div><div class="value" id="tile-hdg-hold">ARMED</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">AUTOPILOT</div><div class="value" id="tile-ap">OFF</div><div class="dial"><div class="indicator" id="dial-ap"></div></div></div>
+        <div class="tile"><div class="label">MISSILE BAY</div><div class="value" id="tile-missiles">6 READY</div><div class="bar"><span id="bar-missiles" style="width: 100%"></span></div></div>
+        <div class="tile"><div class="label">CHAFF</div><div class="value">30</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">FLARE</div><div class="value">18</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led amber"></div></div></div>
+        <div class="tile"><div class="label">COOLING</div><div class="value">OK</div><div class="dial"><div class="indicator" style="width: 48%"></div></div></div>
+        <div class="tile"><div class="label">CABIN PRESS</div><div class="value">13 psi</div><div class="bar"><span style="width: 80%"></span></div></div>
+        <div class="tile"><div class="label">BRAKE</div><div class="value">IDLE</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">NOSE WHEEL</div><div class="value">LOCK</div><div class="led-row"><div class="led"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">HOOK</div><div class="value">STOW</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">MASTER ARM</div><div class="value" id="tile-master-arm">SAFE</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">G-LIMIT</div><div class="value">+9 / -3</div><div class="dial"><div class="indicator" style="width: 68%"></div></div></div>
+        <div class="tile"><div class="label">STRUCTURE</div><div class="value">GREEN</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">ENGINE 1</div><div class="value">98% RPM</div><div class="bar"><span style="width: 98%"></span></div></div>
+        <div class="tile"><div class="label">ENGINE 2</div><div class="value">98% RPM</div><div class="bar"><span style="width: 98%"></span></div></div>
+        <div class="tile"><div class="label">OIL TEMP</div><div class="value">215 °F</div><div class="bar"><span style="width: 70%"></span></div></div>
+        <div class="tile"><div class="label">TURBINE</div><div class="value">NOMINAL</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">INTAKE ICE</div><div class="value">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">WING LOAD</div><div class="value">2.1 g</div><div class="bar"><span style="width: 21%"></span></div></div>
+        <div class="tile"><div class="label">FUSELAGE TEMP</div><div class="value">113 °F</div><div class="bar"><span style="width: 40%"></span></div></div>
+        <div class="tile"><div class="label">COMMS</div><div class="value">SECURE</div><div class="led-row"><div class="led green"></div><div class="led blue"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">DATA LINK</div><div class="value">LINK-16</div><div class="bar"><span style="width: 76%"></span></div></div>
+        <div class="tile"><div class="label">AI WINGMAN</div><div class="value">ON STATION</div><div class="led-row"><div class="led blue"></div><div class="led green"></div><div class="led blue"></div></div></div>
+        <div class="tile"><div class="label">THREAT</div><div class="value">LOW</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">STEALTH</div><div class="value">ACTIVE</div><div class="bar"><span style="width: 88%"></span></div></div>
+        <div class="tile"><div class="label">SIGNATURE</div><div class="value">-24 dBsm</div><div class="bar"><span style="width: 24%"></span></div></div>
+        <div class="tile"><div class="label">AI AUTONOMY</div><div class="value">GUARD</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">MAP MODE</div><div class="value">TERRAIN</div><div class="bar"><span style="width: 55%"></span></div></div>
+        <div class="tile"><div class="label">WEATHER RADAR</div><div class="value">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">JETTISON</div><div class="value">SAFE</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">CABIN TEMP</div><div class="value">72 °F</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">POWER BUS</div><div class="value">NOM</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">BATTERY</div><div class="value">98%</div><div class="bar"><span style="width: 98%"></span></div></div>
+        <div class="tile"><div class="label">AUX POWER</div><div class="value">READY</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">GYRO</div><div class="value">LOCKED</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">STABILIZER</div><div class="value">LIVE</div><div class="bar"><span style="width: 82%"></span></div></div>
+        <div class="tile"><div class="label">AILERON</div><div class="value">SYNC</div><div class="bar"><span style="width: 72%"></span></div></div>
+        <div class="tile"><div class="label">RUDDER</div><div class="value">SYNC</div><div class="bar"><span style="width: 76%"></span></div></div>
+        <div class="tile"><div class="label">ELEVATOR</div><div class="value">SYNC</div><div class="bar"><span style="width: 74%"></span></div></div>
+        <div class="tile"><div class="label">FLIGHT PATH</div><div class="value">STABLE</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">TACAN</div><div class="value">CH 74X</div><div class="bar"><span style="width: 74%"></span></div></div>
+        <div class="tile"><div class="label">ILS</div><div class="value">STANDBY</div><div class="bar"><span style="width: 40%"></span></div></div>
+        <div class="tile"><div class="label">GPS</div><div class="value">LOCK</div><div class="led-row"><div class="led blue"></div><div class="led green"></div><div class="led blue"></div></div></div>
+        <div class="tile"><div class="label">HUD BRIGHT</div><div class="value">65%</div><div class="bar"><span style="width: 65%"></span></div></div>
+        <div class="tile"><div class="label">MFD</div><div class="value">ONLINE</div><div class="led-row"><div class="led blue"></div><div class="led blue"></div><div class="led blue"></div></div></div>
+        <div class="tile"><div class="label">RECORDER</div><div class="value">REC</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">BLACK BOX</div><div class="value">ARMED</div><div class="bar"><span style="width: 80%"></span></div></div>
+        <div class="tile"><div class="label">CABIN LIGHT</div><div class="value">DIM</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">FORMATION</div><div class="value">LEAD</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">TIMER</div><div class="value">00:00:00</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">CHECKLIST</div><div class="value">COMPLETE</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
+        <div class="tile"><div class="label">CABIN LEAK</div><div class="value">NONE</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">STROBE</div><div class="value">ON</div><div class="led-row"><div class="led blue"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">BEACON</div><div class="value">ON</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">NAV LIGHT</div><div class="value">ON</div><div class="led-row"><div class="led green"></div><div class="led amber"></div><div class="led blue"></div></div></div>
+        <div class="tile"><div class="label">FLOOD</div><div class="value">OFF</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">BOARD DIM</div><div class="value">65%</div><div class="bar"><span style="width: 65%"></span></div></div>
+        <div class="tile"><div class="label">CABIN FAN</div><div class="value">AUTO</div><div class="dial"><div class="indicator" style="width: 45%"></div></div></div>
+        <div class="tile"><div class="label">EMERGENCY</div><div class="value">SAFE</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
+        <!-- Additional blocks for advanced avionics with functional readouts -->
+        <div class="tile"><div class="label">COOLANT LOOP A</div><div class="value" id="tile-coolant-a">NOMINAL</div><div class="bar"><span id="bar-coolant-a" style="width: 72%"></span></div></div>
+        <div class="tile"><div class="label">COOLANT LOOP B</div><div class="value" id="tile-coolant-b">NOMINAL</div><div class="bar"><span id="bar-coolant-b" style="width: 69%"></span></div></div>
+        <div class="tile"><div class="label">PITOT</div><div class="value" id="tile-pitot">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">AOA VANE</div><div class="value" id="tile-aoa-vane">OK</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">CANOPY SEAL</div><div class="value" id="tile-canopy">LOCK</div><div class="bar"><span style="width: 88%"></span></div></div>
+        <div class="tile"><div class="label">ECS</div><div class="value" id="tile-ecs">NORMAL</div><div class="bar"><span style="width: 63%"></span></div></div>
+        <div class="tile"><div class="label">CABIN CO2</div><div class="value" id="tile-co2">SAFE</div><div class="bar"><span style="width: 25%"></span></div></div>
+        <div class="tile"><div class="label">GPS SAT</div><div class="value" id="tile-gps-sat">10</div><div class="bar"><span style="width: 83%"></span></div></div>
+        <div class="tile"><div class="label">INS DRIFT</div><div class="value" id="tile-ins-drift">LOW</div><div class="bar"><span style="width: 12%"></span></div></div>
+        <div class="tile"><div class="label">BRAKE TEMP</div><div class="value" id="tile-brake-temp">120 °F</div><div class="bar"><span style="width: 35%"></span></div></div>
+        <div class="tile"><div class="label">WING FLEX</div><div class="value" id="tile-wing-flex">0.3°</div><div class="bar"><span style="width: 18%"></span></div></div>
+        <div class="tile"><div class="label">STRUCTURAL MON</div><div class="value" id="tile-struct-mon">GREEN</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">MISSILE HEAT</div><div class="value" id="tile-missile-heat">COOL</div><div class="bar"><span style="width: 44%"></span></div></div>
+        <div class="tile"><div class="label">RANGEFINDER</div><div class="value" id="tile-range">LOCK</div><div class="led-row"><div class="led green"></div><div class="led blue"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">TURRET CAM</div><div class="value" id="tile-turret">STOW</div><div class="bar"><span style="width: 8%"></span></div></div>
+        <div class="tile"><div class="label">SENSOR FUSION</div><div class="value" id="tile-fusion">ON</div><div class="bar"><span style="width: 91%"></span></div></div>
+        <div class="tile"><div class="label">AUTO TRIM</div><div class="value" id="tile-trim">ON</div><div class="bar"><span style="width: 66%"></span></div></div>
+        <div class="tile"><div class="label">BINGO FUEL</div><div class="value" id="tile-bingo">2500 lbs</div><div class="bar"><span style="width: 25%"></span></div></div>
+        <div class="tile"><div class="label">MISSION TIMER</div><div class="value" id="tile-mission">00:15:33</div><div class="bar"><span style="width: 30%"></span></div></div>
+        <div class="tile"><div class="label">AUTO GCAS</div><div class="value" id="tile-gcas">ARMED</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">MAG VAR</div><div class="value" id="tile-mag">-4.1°</div><div class="bar"><span style="width: 41%"></span></div></div>
+        <div class="tile"><div class="label">WIND</div><div class="value" id="tile-wind">6 kts</div><div class="bar"><span style="width: 12%"></span></div></div>
+        <div class="tile"><div class="label">DATALINK PKT</div><div class="value" id="tile-datalink">OK</div><div class="bar"><span style="width: 77%"></span></div></div>
+        <div class="tile"><div class="label">SAT UPLINK</div><div class="value" id="tile-sat">SYNC</div><div class="bar"><span style="width: 82%"></span></div></div>
+        <div class="tile"><div class="label">RCS PANEL</div><div class="value" id="tile-rcs">LOW</div><div class="bar"><span style="width: 18%"></span></div></div>
+        <div class="tile"><div class="label">HELMET CAM</div><div class="value" id="tile-helmet">LIVE</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">HMD ALIGN</div><div class="value" id="tile-hmd">GOOD</div><div class="bar"><span style="width: 71%"></span></div></div>
+        <div class="tile"><div class="label">OBOGS</div><div class="value" id="tile-obogs">ON</div><div class="bar"><span style="width: 76%"></span></div></div>
+        <div class="tile"><div class="label">CANOPY TEMP</div><div class="value" id="tile-canopy-temp">58 °F</div><div class="bar"><span style="width: 58%"></span></div></div>
+        <div class="tile"><div class="label">WING ICING</div><div class="value" id="tile-icing">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+        <div class="tile"><div class="label">UPLINK ERR</div><div class="value" id="tile-uplink">0</div><div class="bar"><span style="width: 5%"></span></div></div>
+        <div class="tile"><div class="label">EMCON</div><div class="value" id="tile-emcon">L1</div><div class="bar"><span style="width: 30%"></span></div></div>
+        <div class="tile"><div class="label">AUTO NAV</div><div class="value" id="tile-auto-nav">ON</div><div class="bar"><span style="width: 63%"></span></div></div>
+        <div class="tile"><div class="label">WPN COOL</div><div class="value" id="tile-wpn-cool">PRIME</div><div class="bar"><span style="width: 64%"></span></div></div>
+        <div class="tile"><div class="label">VRS GUARD</div><div class="value" id="tile-vrs">MON</div><div class="bar"><span style="width: 22%"></span></div></div>
+        <div class="tile"><div class="label">GEO-FENCE</div><div class="value" id="tile-fence">CLEAR</div><div class="bar"><span style="width: 12%"></span></div></div>
+        <div class="tile"><div class="label">TARGET LIST</div><div class="value" id="tile-target-list">6</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">TRACK QUALITY</div><div class="value" id="tile-track">HIGH</div><div class="bar"><span style="width: 86%"></span></div></div>
+        <div class="tile"><div class="label">MISSILE FUSING</div><div class="value" id="tile-fusing">PROX</div><div class="bar"><span style="width: 70%"></span></div></div>
+        <div class="tile"><div class="label">EW BAND</div><div class="value" id="tile-ew">BROAD</div><div class="bar"><span style="width: 48%"></span></div></div>
+        <div class="tile"><div class="label">COUNTERMEASURE</div><div class="value" id="tile-cm">AUTO</div><div class="bar"><span style="width: 68%"></span></div></div>
+        <div class="tile"><div class="label">JAMMER</div><div class="value" id="tile-jammer">IDLE</div><div class="bar"><span style="width: 20%"></span></div></div>
+        <div class="tile"><div class="label">SIGNAL NOISE</div><div class="value" id="tile-noise">LOW</div><div class="bar"><span style="width: 18%"></span></div></div>
+        <div class="tile"><div class="label">HARDPOINTS</div><div class="value" id="tile-hardpoints">6</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">BAY DOOR</div><div class="value" id="tile-bay-door">CLOSED</div><div class="bar"><span style="width: 10%"></span></div></div>
+        <div class="tile"><div class="label">BAY PRESS</div><div class="value" id="tile-bay-press">12 psi</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">GUN AMMO</div><div class="value" id="tile-gun">450</div><div class="bar"><span style="width: 75%"></span></div></div>
+        <div class="tile"><div class="label">GUN HEAT</div><div class="value" id="tile-gun-heat">LOW</div><div class="bar"><span style="width: 25%"></span></div></div>
+        <div class="tile"><div class="label">LASER</div><div class="value" id="tile-laser">ARM</div><div class="bar"><span style="width: 55%"></span></div></div>
+        <div class="tile"><div class="label">TGP</div><div class="value" id="tile-tgp">STAB</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">ALT ALERT</div><div class="value" id="tile-alt-alert">OFF</div><div class="bar"><span style="width: 10%"></span></div></div>
+        <div class="tile"><div class="label">AP WARN</div><div class="value" id="tile-ap-warn">CLEAR</div><div class="bar"><span style="width: 8%"></span></div></div>
+        <div class="tile"><div class="label">HUD REC</div><div class="value" id="tile-hud-rec">ON</div><div class="bar"><span style="width: 70%"></span></div></div>
+        <div class="tile"><div class="label">FLIR</div><div class="value" id="tile-flir">ON</div><div class="bar"><span style="width: 65%"></span></div></div>
+        <div class="tile"><div class="label">NAV ACC</div><div class="value" id="tile-nav-acc">0.7 m</div><div class="bar"><span style="width: 90%"></span></div></div>
+        <div class="tile"><div class="label">RANGE TO BASE</div><div class="value" id="tile-range-base">42 nm</div><div class="bar"><span style="width: 42%"></span></div></div>
+        <div class="tile"><div class="label">BULLSEYE</div><div class="value" id="tile-bull">BR 270/32</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">TANKER</div><div class="value" id="tile-tanker">BR 090/54</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">FORMATION SEP</div><div class="value" id="tile-sep">0.5 nm</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">G-ONSET</div><div class="value" id="tile-g-onset">2.8 g/s</div><div class="bar"><span style="width: 28%"></span></div></div>
+        <div class="tile"><div class="label">TRIM POS</div><div class="value" id="tile-trim-pos">1.1°</div><div class="bar"><span style="width: 11%"></span></div></div>
+        <div class="tile"><div class="label">WING SWEEP</div><div class="value" id="tile-sweep">FWD</div><div class="bar"><span style="width: 10%"></span></div></div>
+        <div class="tile"><div class="label">MACH ALERT</div><div class="value" id="tile-mach">OFF</div><div class="bar"><span style="width: 5%"></span></div></div>
+        <div class="tile"><div class="label">STALL PROT</div><div class="value" id="tile-stall">ARM</div><div class="bar"><span style="width: 75%"></span></div></div>
+        <div class="tile"><div class="label">CANARD</div><div class="value" id="tile-canard">SYNC</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">AIL SYNC</div><div class="value" id="tile-ail-sync">OK</div><div class="bar"><span style="width: 55%"></span></div></div>
+        <div class="tile"><div class="label">RCS COATING</div><div class="value" id="tile-rcs-coat">INTACT</div><div class="bar"><span style="width: 92%"></span></div></div>
+        <div class="tile"><div class="label">CANOPY ICE</div><div class="value" id="tile-ice">CLEAR</div><div class="bar"><span style="width: 12%"></span></div></div>
+        <div class="tile"><div class="label">RAD ALT</div><div class="value" id="tile-radalt">ARMED</div><div class="bar"><span style="width: 45%"></span></div></div>
+        <div class="tile"><div class="label">TCAS</div><div class="value" id="tile-tcas">TRAFFIC</div><div class="bar"><span style="width: 30%"></span></div></div>
+        <div class="tile"><div class="label">IFF MODE</div><div class="value" id="tile-iff-mode">4</div><div class="bar"><span style="width: 44%"></span></div></div>
+        <div class="tile"><div class="label">INS ALIGN</div><div class="value" id="tile-ins-align">GOOD</div><div class="bar"><span style="width: 90%"></span></div></div>
+        <div class="tile"><div class="label">CABIN HUM</div><div class="value" id="tile-hum">38%</div><div class="bar"><span style="width: 38%"></span></div></div>
+        <div class="tile"><div class="label">CP ECS</div><div class="value" id="tile-cp-ecs">MED</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">SPARKS</div><div class="value" id="tile-sparks">0</div><div class="bar"><span style="width: 5%"></span></div></div>
+        <div class="tile"><div class="label">DEBRIS</div><div class="value" id="tile-debris">LOW</div><div class="bar"><span style="width: 8%"></span></div></div>
+        <div class="tile"><div class="label">APO APS</div><div class="value" id="tile-aps">READY</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">FO CAL</div><div class="value" id="tile-fo-cal">GOOD</div><div class="bar"><span style="width: 78%"></span></div></div>
+        <div class="tile"><div class="label">LASER TEMP</div><div class="value" id="tile-laser-temp">105 °F</div><div class="bar"><span style="width: 52%"></span></div></div>
+        <div class="tile"><div class="label">TGP TEMP</div><div class="value" id="tile-tgp-temp">95 °F</div><div class="bar"><span style="width: 45%"></span></div></div>
+        <div class="tile"><div class="label">CARTRIDGE</div><div class="value" id="tile-cart">OK</div><div class="bar"><span style="width: 80%"></span></div></div>
+        <div class="tile"><div class="label">DECOY</div><div class="value" id="tile-decoy">READY</div><div class="bar"><span style="width: 85%"></span></div></div>
+        <div class="tile"><div class="label">PROX ALERT</div><div class="value" id="tile-prox">CLEAR</div><div class="bar"><span style="width: 10%"></span></div></div>
+        <div class="tile"><div class="label">WING TIP</div><div class="value" id="tile-wingtip">CLEAN</div><div class="bar"><span style="width: 18%"></span></div></div>
+        <div class="tile"><div class="label">AIL SHAKE</div><div class="value" id="tile-ailshake">NONE</div><div class="bar"><span style="width: 8%"></span></div></div>
+        <div class="tile"><div class="label">THRUST SPLIT</div><div class="value" id="tile-split">0%</div><div class="bar"><span style="width: 0%"></span></div></div>
+        <div class="tile"><div class="label">THREAT DB</div><div class="value" id="tile-threat-db">UPD</div><div class="bar"><span style="width: 95%"></span></div></div>
+        <div class="tile"><div class="label">SIGINT</div><div class="value" id="tile-sigint">LIVE</div><div class="bar"><span style="width: 55%"></span></div></div>
+        <div class="tile"><div class="label">RADIO A</div><div class="value" id="tile-radio-a">GUARD</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">RADIO B</div><div class="value" id="tile-radio-b">TACTICAL</div><div class="bar"><span style="width: 65%"></span></div></div>
+        <div class="tile"><div class="label">BEARING TGT</div><div class="value" id="tile-bearing">312°</div><div class="bar"><span style="width: 31%"></span></div></div>
+        <div class="tile"><div class="label">RANGE TGT</div><div class="value" id="tile-range-tgt">14 nm</div><div class="bar"><span style="width: 14%"></span></div></div>
+        <div class="tile"><div class="label">CUE</div><div class="value" id="tile-cue">HUD</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">GUN BURST</div><div class="value" id="tile-gun-burst">SAFE</div><div class="bar"><span style="width: 10%"></span></div></div>
+        <div class="tile"><div class="label">WINGMEN</div><div class="value" id="tile-wingmen">2</div><div class="bar"><span style="width: 20%"></span></div></div>
+        <div class="tile"><div class="label">AI MODE</div><div class="value" id="tile-ai">DEFENSIVE</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">BDA</div><div class="value" id="tile-bda">0%</div><div class="bar"><span style="width: 0%"></span></div></div>
+        <div class="tile"><div class="label">TARGET QUEUE</div><div class="value" id="tile-queue">A</div><div class="bar"><span style="width: 10%"></span></div></div>
+        <div class="tile"><div class="label">MISSILE CAM</div><div class="value" id="tile-mcam">STBY</div><div class="bar"><span style="width: 25%"></span></div></div>
+        <div class="tile"><div class="label">AOI</div><div class="value" id="tile-aoi">FRONT</div><div class="bar"><span style="width: 50%"></span></div></div>
+        <div class="tile"><div class="label">DATA RATE</div><div class="value" id="tile-rate">12 Mbps</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="tile"><div class="label">LINK LAT</div><div class="value" id="tile-lat">23 ms</div><div class="bar"><span style="width: 23%"></span></div></div>
+        <div class="tile"><div class="label">TERRAIN AVOID</div><div class="value" id="tile-ta">ARM</div><div class="bar"><span style="width: 70%"></span></div></div>
+        <div class="tile"><div class="label">JET HEALTH</div><div class="value" id="tile-health">98%</div><div class="bar"><span style="width: 98%"></span></div></div>
+        <div class="tile"><div class="label">LOADOUT MASS</div><div class="value" id="tile-mass">29,400 lbs</div><div class="bar"><span style="width: 60%"></span></div></div>
+      </div>
+      <div id="right-panel">
+        <div class="card">
+          <h4>MISSION LOG</h4>
+          <div class="log" id="mission-log"></div>
+          <div class="control-grid">
+            <div class="btn" id="btn-master-arm">Toggle Master Arm</div>
+            <div class="btn" id="btn-afterburn">Afterburner</div>
+            <div class="btn" id="btn-autopilot">Autopilot</div>
+            <div class="btn" id="btn-reset-view">Recenter View</div>
+            <div class="btn" id="btn-spawn-target">Spawn Target</div>
+            <div class="btn" id="btn-clear-missiles">Clear Missiles</div>
+          </div>
+        </div>
+        <div class="card">
+          <h4>CHECKLIST / CONTROLS</h4>
+          <div class="log" id="control-help">
+            <div>W/S: Pitch | A/D: Roll | Q/E: Yaw</div>
+            <div>Shift/Ctrl: Throttle +/- | F: Afterburner</div>
+            <div>Space / Click: Fire missile</div>
+            <div>R: Reset attitude | G: Gear toggle</div>
+            <div>1: NAV mode | 2: WPN mode</div>
+            <div>Mouse move: Fine pitch/roll</div>
+            <div>Esc: Pointer unlock</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('renderCanvas');
+    const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    const logEl = document.getElementById('mission-log');
+    const ui = {
+      hudAlt: document.getElementById('hud-altitude'),
+      hudAltitude: document.getElementById('hud-altitude'),
+      hudSpeed: document.getElementById('hud-speed'),
+      hudHeading: document.getElementById('hud-heading'),
+      hudPitch: document.getElementById('hud-pitch'),
+      hudRoll: document.getElementById('hud-roll'),
+      hudThrottle: document.getElementById('hud-throttle'),
+      badgeFps: document.getElementById('badge-fps'),
+      badgeMissiles: document.getElementById('badge-missiles'),
+      badgeTargets: document.getElementById('badge-targets'),
+      modePill: document.getElementById('mode-pill'),
+      weaponPill: document.getElementById('weapon-pill'),
+      statusPill: document.getElementById('status-pill'),
+    };
+    ui.badgeMissiles.textContent = 'MISSILES: ∞';
+    const tileMasterArm = document.getElementById('tile-master-arm');
+    tileMasterArm.textContent = 'ARMED';
+    ui.weaponPill.textContent = 'ARMED';
+    const crosshairEl = document.querySelector('#hud-overlay .crosshair');
+
+    function updateCrosshairVisual(state) {
+      const s = state || { x: input.crosshairX, y: input.crosshairY };
+      if (crosshairEl) crosshairEl.style.transform = 'translate(' + s.x + 'px,' + s.y + 'px)';
+    }
+
+    function addLog(line) {
+      const ts = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.textContent = `[${ts}] ${line}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
+    function createScene() {
+      const scene = new BABYLON.Scene(engine);
+      scene.clearColor = new BABYLON.Color4(0.02, 0.03, 0.06, 1);
+      scene.ambientColor = new BABYLON.Color3(0.05, 0.08, 0.12);
+
+      const hemi = new BABYLON.HemisphericLight('hemi', new BABYLON.Vector3(0, 1, 0), scene);
+      hemi.intensity = 0.65;
+      const sun = new BABYLON.DirectionalLight('sun', new BABYLON.Vector3(-0.6, -1, -0.2), scene);
+      sun.position = new BABYLON.Vector3(500, 800, 500);
+      sun.intensity = 2.2;
+      sun.shadowMinZ = 1;
+      sun.shadowMaxZ = 4000;
+      const shadowGen = new BABYLON.ShadowGenerator(4096, sun);
+      shadowGen.useBlurCloseExponentialShadowMap = true;
+      shadowGen.blurKernel = 16;
+
+      const skybox = BABYLON.MeshBuilder.CreateBox('skyBox', { size: 8000 }, scene);
+      const skyMat = new BABYLON.StandardMaterial('skyMat', scene);
+      skyMat.backFaceCulling = false;
+      skyMat.disableLighting = true;
+      const skyTex = new BABYLON.DynamicTexture('skyGradient', { width: 2, height: 512 }, scene, false);
+      const skyCtx = skyTex.getContext();
+      const skyGrad = skyCtx.createLinearGradient(0, 0, 0, 512);
+      skyGrad.addColorStop(0, '#081633');
+      skyGrad.addColorStop(0.4, '#12345c');
+      skyGrad.addColorStop(0.75, '#3c6ea5');
+      skyGrad.addColorStop(1, '#9fd4ff');
+      skyCtx.fillStyle = skyGrad;
+      skyCtx.fillRect(0, 0, 2, 512);
+      skyTex.update();
+      skyTex.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
+      skyTex.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+      skyTex.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+      skyMat.emissiveTexture = skyTex;
+      skyMat.emissiveColor = new BABYLON.Color3(0.35, 0.4, 0.45);
+      skybox.material = skyMat;
+
+      const terrain = BABYLON.MeshBuilder.CreateGround('terrain', { width: 6000, height: 6000, subdivisions: 180 }, scene);
+      const positions = terrain.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+      const normals = [];
+      const seed = 1337;
+      function hash(x, y) {
+        const s = Math.sin(x * 127.1 + y * 311.7 + seed) * 43758.5453;
+        return s - Math.floor(s);
+      }
+      function noise(x, y) {
+        const ix = Math.floor(x);
+        const iy = Math.floor(y);
+        const fx = x - ix;
+        const fy = y - iy;
+        const a = hash(ix, iy);
+        const b = hash(ix + 1, iy);
+        const c = hash(ix, iy + 1);
+        const d = hash(ix + 1, iy + 1);
+        const u = fx * fx * (3 - 2 * fx);
+        const v = fy * fy * (3 - 2 * fy);
+        return BABYLON.Scalar.Lerp(a, b, u) + (c - a) * v * (1 - u) + (d - b) * u * v;
+      }
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i] * 0.004;
+        const z = positions[i + 2] * 0.004;
+        const h = (noise(x, z) + noise(x * 0.4, z * 0.4) * 0.5 + noise(x * 0.1, z * 0.1) * 0.25) * 180 - 40;
+        positions[i + 1] = h;
+      }
+      terrain.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions);
+      BABYLON.VertexData.ComputeNormals(positions, terrain.getIndices(), normals);
+      terrain.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals);
+      const terrainMat = new BABYLON.StandardMaterial('terrainMat', scene);
+      terrainMat.diffuseColor = new BABYLON.Color3(0.23, 0.36, 0.18);
+      terrainMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+      terrainMat.emissiveColor = new BABYLON.Color3(0.02, 0.04, 0.02);
+      terrain.material = terrainMat;
+      terrain.receiveShadows = true;
+      shadowGen.addShadowCaster(terrain);
+
+      const water = BABYLON.MeshBuilder.CreateGround('water', { width: 6000, height: 6000, subdivisions: 8 }, scene);
+      water.position.y = -35;
+      const waterMat = new BABYLON.StandardMaterial('waterMat', scene);
+      waterMat.alpha = 0.8;
+      waterMat.diffuseColor = new BABYLON.Color3(0.05, 0.18, 0.27);
+      waterMat.specularColor = new BABYLON.Color3(0.2, 0.4, 0.6);
+      water.material = waterMat;
+
+      const cloudSystem = new BABYLON.ParticleSystem('clouds', 2000, scene);
+      const cloudTex = new BABYLON.DynamicTexture('cloudSprite', { width: 256, height: 256 }, scene, true);
+      const cloudCtx = cloudTex.getContext();
+      const cloudGrad = cloudCtx.createRadialGradient(128, 128, 10, 128, 128, 128);
+      cloudGrad.addColorStop(0, 'rgba(255,255,255,0.18)');
+      cloudGrad.addColorStop(0.6, 'rgba(255,255,255,0.08)');
+      cloudGrad.addColorStop(1, 'rgba(255,255,255,0)');
+      cloudCtx.fillStyle = cloudGrad;
+      cloudCtx.fillRect(0, 0, 256, 256);
+      cloudTex.update();
+      cloudSystem.particleTexture = cloudTex;
+      cloudSystem.emitter = new BABYLON.Vector3(0, 400, 0);
+      cloudSystem.minEmitBox = new BABYLON.Vector3(-2000, -50, -2000);
+      cloudSystem.maxEmitBox = new BABYLON.Vector3(2000, 50, 2000);
+      cloudSystem.minSize = 120;
+      cloudSystem.maxSize = 240;
+      cloudSystem.minLifeTime = 9999;
+      cloudSystem.maxLifeTime = 9999;
+      cloudSystem.emitRate = 200;
+      cloudSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+      cloudSystem.color1 = new BABYLON.Color4(1, 1, 1, 0.08);
+      cloudSystem.color2 = new BABYLON.Color4(1, 1, 1, 0.05);
+      cloudSystem.start();
+
+      const explosionTexture = new BABYLON.DynamicTexture('explosionTex', { width: 256, height: 256 }, scene, true);
+      const explosionCtx = explosionTexture.getContext();
+      const explosionGrad = explosionCtx.createRadialGradient(128, 128, 6, 128, 128, 128);
+      explosionGrad.addColorStop(0, 'rgba(255,255,255,1)');
+      explosionGrad.addColorStop(0.35, 'rgba(255,214,120,0.9)');
+      explosionGrad.addColorStop(0.7, 'rgba(255,120,40,0.5)');
+      explosionGrad.addColorStop(1, 'rgba(20,8,2,0)');
+      explosionCtx.fillStyle = explosionGrad;
+      explosionCtx.fillRect(0, 0, 256, 256);
+      explosionTexture.update();
+
+      const baseRoot = new BABYLON.TransformNode('baseRoot', scene);
+      const runwayHeight = terrain.getHeightAtCoordinates(-320, -520) + 1;
+      const runway = BABYLON.MeshBuilder.CreateBox('runway', { width: 90, height: 2, depth: 1800 }, scene);
+      runway.position = new BABYLON.Vector3(-320, runwayHeight, -520);
+      runway.rotationQuaternion = BABYLON.Quaternion.Identity();
+      runway.parent = baseRoot;
+      const runwayMat = new BABYLON.StandardMaterial('runwayMat', scene);
+      runwayMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+      const runwayTex = new BABYLON.DynamicTexture('runwayTex', { width: 1024, height: 1024 }, scene, true);
+      const runwayCtx = runwayTex.getContext();
+      runwayCtx.fillStyle = '#1c1f28';
+      runwayCtx.fillRect(0, 0, 1024, 1024);
+      runwayCtx.strokeStyle = '#fefefe';
+      runwayCtx.lineWidth = 36;
+      for (let i = 80; i < 1024; i += 140) {
+        runwayCtx.beginPath();
+        runwayCtx.moveTo(512, i);
+        runwayCtx.lineTo(512, i + 60);
+        runwayCtx.stroke();
+      }
+      runwayCtx.fillStyle = '#f6c56b';
+      runwayCtx.fillRect(470, 480, 108, 64);
+      runwayTex.update();
+      runwayMat.diffuseTexture = runwayTex;
+      runway.material = runwayMat;
+      runway.receiveShadows = true;
+
+      const hangarMat = new BABYLON.StandardMaterial('hangarMat', scene);
+      hangarMat.diffuseColor = new BABYLON.Color3(0.32, 0.35, 0.4);
+      hangarMat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.12);
+      for (let i = 0; i < 3; i++) {
+        const hangarBase = BABYLON.MeshBuilder.CreateBox('hangarBase-' + i, { width: 70, depth: 45, height: 18 }, scene);
+        hangarBase.position = new BABYLON.Vector3(-220 + i * 80, terrain.getHeightAtCoordinates(-220 + i * 80, -400) + 9, -400);
+        hangarBase.material = hangarMat;
+        hangarBase.parent = baseRoot;
+        const roof = BABYLON.MeshBuilder.CreateCylinder('hangarRoof-' + i, { height: 70, diameterTop: 45, diameterBottom: 45, tessellation: 24 }, scene);
+        roof.scaling = new BABYLON.Vector3(1, 0.35, 1);
+        roof.rotation.z = Math.PI / 2;
+        roof.position = hangarBase.position.add(new BABYLON.Vector3(0, 18, 0));
+        roof.material = hangarMat;
+        roof.parent = baseRoot;
+        shadowGen.addShadowCaster(hangarBase);
+        shadowGen.addShadowCaster(roof);
+      }
+
+      const tower = BABYLON.MeshBuilder.CreateCylinder('controlTower', { height: 55, diameterTop: 6, diameterBottom: 8, tessellation: 16 }, scene);
+      tower.position = new BABYLON.Vector3(-260, terrain.getHeightAtCoordinates(-260, -460) + 27, -460);
+      const towerGlass = BABYLON.MeshBuilder.CreateCylinder('towerGlass', { height: 10, diameter: 16, tessellation: 24 }, scene);
+      towerGlass.position = tower.position.add(new BABYLON.Vector3(0, 25, 0));
+      const towerMat = new BABYLON.StandardMaterial('towerMat', scene);
+      towerMat.diffuseColor = new BABYLON.Color3(0.28, 0.3, 0.32);
+      tower.material = towerMat;
+      const towerGlassMat = new BABYLON.StandardMaterial('towerGlassMat', scene);
+      towerGlassMat.diffuseColor = new BABYLON.Color3(0.45, 0.65, 0.8);
+      towerGlassMat.alpha = 0.5;
+      towerGlass.material = towerGlassMat;
+      tower.parent = baseRoot;
+      towerGlass.parent = baseRoot;
+      shadowGen.addShadowCaster(tower);
+
+      const radarDome = BABYLON.MeshBuilder.CreateSphere('radarDome', { diameter: 18, segments: 10 }, scene);
+      radarDome.position = new BABYLON.Vector3(-140, terrain.getHeightAtCoordinates(-140, -360) + 12, -360);
+      const radarMat = new BABYLON.StandardMaterial('radarMat', scene);
+      radarMat.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.95);
+      radarDome.material = radarMat;
+      radarDome.parent = baseRoot;
+      shadowGen.addShadowCaster(radarDome);
+
+      const rockMat = new BABYLON.StandardMaterial('rockMat', scene);
+      rockMat.diffuseColor = new BABYLON.Color3(0.28, 0.26, 0.24);
+      for (let i = 0; i < 25; i++) {
+        const rock = BABYLON.MeshBuilder.CreateIcoSphere('rock-' + i, { radius: 4 + Math.random() * 3, subdivisions: 1 }, scene);
+        rock.scaling = new BABYLON.Vector3(1, 0.6 + Math.random() * 0.4, 1);
+        rock.position = new BABYLON.Vector3(Math.random() * 1400 - 700, 0, Math.random() * 1400 - 700);
+        rock.position.y = terrain.getHeightAtCoordinates(rock.position.x, rock.position.z) + rock.scaling.y;
+        rock.material = rockMat;
+        rock.receiveShadows = true;
+      }
+
+      const jetRoot = new BABYLON.TransformNode('jetRoot', scene);
+      const jetScale = 1.8;
+      const fuselage = BABYLON.MeshBuilder.CreateCylinder('fuselage', { height: 12 * jetScale, diameterTop: 1.2 * jetScale, diameterBottom: 1.5 * jetScale, tessellation: 12 }, scene);
+      fuselage.position = new BABYLON.Vector3(0, 0, 0);
+      fuselage.rotation.x = Math.PI / 2;
+      fuselage.parent = jetRoot;
+      const nose = BABYLON.MeshBuilder.CreateCylinder('nose', { height: 2.5 * jetScale, diameterTop: 0, diameterBottom: 1.2 * jetScale, tessellation: 12 }, scene);
+      nose.rotation.x = Math.PI / 2;
+      nose.position = new BABYLON.Vector3(0, 6.8 * jetScale, 0);
+      nose.parent = jetRoot;
+      const cockpit = BABYLON.MeshBuilder.CreateSphere('cockpit', { diameter: 1.9 * jetScale, segments: 12 }, scene);
+      cockpit.scaling = new BABYLON.Vector3(1.1, 0.7, 1);
+      cockpit.position = new BABYLON.Vector3(0, 3.7 * jetScale, 0.2 * jetScale);
+      cockpit.parent = jetRoot;
+      const wing = BABYLON.MeshBuilder.CreateBox('wing', { width: 10 * jetScale, height: 0.2 * jetScale, depth: 2.6 * jetScale }, scene);
+      wing.position = new BABYLON.Vector3(0, -0.3 * jetScale, 0);
+      wing.rotation = new BABYLON.Vector3(0, 0, 0.08);
+      wing.parent = jetRoot;
+      const tail = BABYLON.MeshBuilder.CreateBox('tail', { width: 3 * jetScale, height: 0.2 * jetScale, depth: 2 * jetScale }, scene);
+      tail.position = new BABYLON.Vector3(0, -5 * jetScale, 0);
+      tail.parent = jetRoot;
+      const tailfin = BABYLON.MeshBuilder.CreateBox('tailfin', { width: 0.2 * jetScale, height: 3.8 * jetScale, depth: 2 * jetScale }, scene);
+      tailfin.position = new BABYLON.Vector3(0, -5.5 * jetScale, 0);
+      tailfin.rotation.x = Math.PI / 15;
+      tailfin.parent = jetRoot;
+      const engineL = BABYLON.MeshBuilder.CreateCylinder('engineL', { height: 2 * jetScale, diameter: 1 * jetScale, tessellation: 12 }, scene);
+      engineL.rotation.x = Math.PI / 2;
+      engineL.position = new BABYLON.Vector3(-0.8 * jetScale, -5.8 * jetScale, 0);
+      engineL.parent = jetRoot;
+      const engineR = engineL.clone('engineR');
+      engineR.position.x = 0.8 * jetScale;
+      engineR.parent = jetRoot;
+      const wingL = BABYLON.MeshBuilder.CreateBox('wingL', { width: 5 * jetScale, height: 0.2 * jetScale, depth: 2 * jetScale }, scene);
+      wingL.position = new BABYLON.Vector3(-2.8 * jetScale, -0.5 * jetScale, 0);
+      wingL.rotation.z = -0.35;
+      wingL.parent = jetRoot;
+      const wingR = wingL.clone('wingR');
+      wingR.position.x = 2.8 * jetScale;
+      wingR.rotation.z = 0.35;
+      wingR.parent = jetRoot;
+      const wingtipL = BABYLON.MeshBuilder.CreateBox('wingtipL', { width: 0.8 * jetScale, height: 0.15 * jetScale, depth: 1.1 * jetScale }, scene);
+      wingtipL.position = new BABYLON.Vector3(-5.2 * jetScale, -0.4 * jetScale, 0);
+      wingtipL.rotation.z = -0.4;
+      wingtipL.parent = jetRoot;
+      const wingtipR = wingtipL.clone('wingtipR');
+      wingtipR.position.x = 5.2 * jetScale;
+      wingtipR.rotation.z = 0.4;
+      wingtipR.parent = jetRoot;
+
+      const jetBodyMat = new BABYLON.PBRMetallicRoughnessMaterial('jetBodyMat', scene);
+      jetBodyMat.baseColor = new BABYLON.Color3(0.25, 0.32, 0.38);
+      jetBodyMat.metallic = 0.8;
+      jetBodyMat.roughness = 0.35;
+      [fuselage, nose, wing, tail, tailfin, wingL, wingR, wingtipL, wingtipR, engineL, engineR].forEach(m => m.material = jetBodyMat);
+
+      const cockpitMat = new BABYLON.PBRMetallicRoughnessMaterial('cockpitMat', scene);
+      cockpitMat.baseColor = new BABYLON.Color3(0.6, 0.8, 0.9);
+      cockpitMat.metallic = 0.05;
+      cockpitMat.roughness = 0.05;
+      cockpitMat.alpha = 0.35;
+      cockpit.material = cockpitMat;
+
+      const exhaustMat = new BABYLON.StandardMaterial('exhaustMat', scene);
+      exhaustMat.emissiveColor = new BABYLON.Color3(1, 0.4, 0.1);
+      engineL.material = exhaustMat;
+      engineR.material = exhaustMat;
+
+      [fuselage, wing, tail, tailfin, wingL, wingR, wingtipL, wingtipR, nose, cockpit, engineL, engineR].forEach(m => shadowGen.addShadowCaster(m));
+
+      const camPivot = new BABYLON.TransformNode('camPivot', scene);
+      camPivot.position = new BABYLON.Vector3(0, 0, 0);
+      const camera = new BABYLON.FreeCamera('pilotCam', new BABYLON.Vector3(0, 0, 0), scene);
+      camera.inputs.clear();
+      camera.fov = BABYLON.Tools.ToRadians(70);
+      camera.minZ = 0.1;
+      camera.maxZ = 10000;
+      camera.inertia = 0.8;
+      camera.parent = camPivot;
+      camera.attachControl(canvas, true);
+
+      const cameraRigState = {
+        distanceBack: 11 * jetScale,
+        height: 3.2 * jetScale,
+        lateral: 0,
+        aimAmount: 0,
+        fovBase: BABYLON.Tools.ToRadians(70),
+        fovAim: BABYLON.Tools.ToRadians(45),
+        fovMissile: BABYLON.Tools.ToRadians(82),
+        missileZoom: 0,
+        missileZoomDuration: 1.1,
+        tmpPos: new BABYLON.Vector3(),
+        tmpTarget: new BABYLON.Vector3(),
+      };
+
+      const missileTemplate = BABYLON.MeshBuilder.CreateCylinder('missileTemplate', { height: 2.4, diameterTop: 0.1, diameterBottom: 0.25, tessellation: 8 }, scene);
+      const missileCone = BABYLON.MeshBuilder.CreateCylinder('missileTip', { height: 0.6, diameterTop: 0, diameterBottom: 0.25, tessellation: 8 }, scene);
+      missileCone.position.y = 1.5;
+      missileCone.parent = missileTemplate;
+      const missileMat = new BABYLON.StandardMaterial('missileMat', scene);
+      missileMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.82);
+      missileMat.emissiveColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+      missileTemplate.material = missileMat;
+      missileTemplate.setEnabled(false);
+
+      const targets = [];
+      function spawnTarget(position) {
+        const t = BABYLON.MeshBuilder.CreateBox('target', { size: 6 }, scene);
+        t.position = position || new BABYLON.Vector3(Math.random() * 800 - 400, 200 + Math.random() * 200, Math.random() * 800 - 400);
+        const tMat = new BABYLON.StandardMaterial('tMat-' + Math.random(), scene);
+        tMat.diffuseColor = new BABYLON.Color3(0.9, 0.3, 0.3);
+        tMat.emissiveColor = new BABYLON.Color3(0.4, 0.05, 0.05);
+        t.material = tMat;
+        shadowGen.addShadowCaster(t);
+        targets.push({ mesh: t, alive: true });
+        addLog('Target spawned at ' + t.position.toString());
+      }
+      for (let i = 0; i < 4; i++) { spawnTarget(); }
+
+      const controls = {
+        pitch: 0,
+        roll: 0,
+        yaw: 0,
+        pitchInput: 0,
+        rollInput: 0,
+        yawInput: 0,
+        throttle: 0.6,
+        throttleTarget: 0.6,
+        afterburner: false,
+        masterArm: true,
+      };
+
+      const input = { keys: {}, pointerLocked: false, aiming: false, crosshairX: 0, crosshairY: 0, crosshairRadius: 140 };
+      updateCrosshairVisual({ x: input.crosshairX, y: input.crosshairY });
+      window.addEventListener('keydown', (e) => {
+        input.keys[e.code] = true;
+        if (e.code === 'Digit1') ui.modePill.textContent = 'NAV MODE';
+        if (e.code === 'Digit2') ui.modePill.textContent = 'WPN MODE';
+        if (e.code === 'KeyF') controls.afterburner = !controls.afterburner;
+        if (e.code === 'KeyG') toggleGear();
+        if (e.code === 'Space') fireMissile();
+        if (e.code === 'KeyR') resetAttitude();
+      });
+      window.addEventListener('keyup', (e) => { input.keys[e.code] = false; });
+      canvas.addEventListener('click', () => {
+        if (!input.pointerLocked) canvas.requestPointerLock();
+        fireMissile();
+      });
+      document.addEventListener('pointerlockchange', () => {
+        input.pointerLocked = !!document.pointerLockElement;
+        if (!input.pointerLocked) {
+          input.aiming = false;
+          input.crosshairX = 0;
+          input.crosshairY = 0;
+          updateCrosshairVisual({ x: 0, y: 0 });
+        }
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!input.pointerLocked) return;
+        const sensitivity = 0.8;
+        input.crosshairX = clamp(input.crosshairX + e.movementX * sensitivity, -input.crosshairRadius, input.crosshairRadius);
+        input.crosshairY = clamp(input.crosshairY + e.movementY * sensitivity, -input.crosshairRadius, input.crosshairRadius);
+        updateCrosshairVisual({ x: input.crosshairX, y: input.crosshairY });
+      });
+      document.addEventListener('mousedown', (e) => {
+        if (e.button === 2) {
+          input.aiming = true;
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('mouseup', (e) => {
+        if (e.button === 2) {
+          input.aiming = false;
+          e.preventDefault();
+        }
+      });
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      document.getElementById('btn-master-arm').onclick = () => toggleMasterArm();
+      document.getElementById('btn-afterburn').onclick = () => { controls.afterburner = !controls.afterburner; };
+      document.getElementById('btn-autopilot').onclick = () => { autopilot.enabled = !autopilot.enabled; addLog('Autopilot ' + (autopilot.enabled ? 'enabled' : 'disabled')); };
+      document.getElementById('btn-reset-view').onclick = () => resetAttitude();
+      document.getElementById('btn-spawn-target').onclick = () => spawnTarget();
+      document.getElementById('btn-clear-missiles').onclick = () => {
+        missiles.forEach(m => m.mesh.dispose());
+        missiles.length = 0;
+      };
+
+      const gear = { down: false };
+      function toggleGear() {
+        gear.down = !gear.down;
+        document.getElementById('tile-gear').textContent = gear.down ? 'DOWN' : 'UP';
+        addLog('Gear ' + (gear.down ? 'deployed' : 'retracted'));
+      }
+
+      function toggleMasterArm() {
+        controls.masterArm = !controls.masterArm;
+        ui.weaponPill.textContent = controls.masterArm ? 'ARMED' : 'SAFE';
+        tileMasterArm.textContent = controls.masterArm ? 'ARMED' : 'SAFE';
+        addLog('Master arm ' + (controls.masterArm ? 'on' : 'off'));
+      }
+
+      const jetState = {
+        position: new BABYLON.Vector3(0, 400, 0),
+        velocity: new BABYLON.Vector3(0, 0, 120),
+        orientation: BABYLON.Quaternion.Identity(),
+        angularVelocity: new BABYLON.Vector3(0, 0, 0),
+        mass: 14500,
+        fuel: 100,
+      };
+
+      camPivot.rotationQuaternion = BABYLON.Quaternion.Identity();
+
+      const autopilot = { enabled: false, targetAlt: 400, targetHdg: 0 };
+
+      const missiles = [];
+      let missileLaunchIndex = 0;
+
+      function spawnExplosion(position) {
+        const impactPos = position.clone ? position.clone() : new BABYLON.Vector3(position.x, position.y, position.z);
+        const flash = BABYLON.MeshBuilder.CreateSphere('explosionFlash-' + Math.random(), { diameter: 2.2, segments: 8 }, scene);
+        const flashMat = new BABYLON.StandardMaterial('flashMat-' + Math.random(), scene);
+        flashMat.emissiveColor = new BABYLON.Color3(1, 0.7, 0.35);
+        flashMat.alpha = 0.9;
+        flash.material = flashMat;
+        flash.position.copyFrom(impactPos);
+        let flashLife = 0.35;
+        const flashObserver = scene.onBeforeRenderObservable.add(() => {
+          const dt = engine.getDeltaTime() / 1000;
+          flashLife -= dt;
+          flash.scaling.addInPlace(new BABYLON.Vector3(dt * 16, dt * 16, dt * 16));
+          flashMat.alpha = Math.max(0, flashLife * 2);
+          if (flashLife <= 0) {
+            flash.dispose();
+            scene.onBeforeRenderObservable.remove(flashObserver);
+          }
+        });
+
+        const explosion = new BABYLON.ParticleSystem('missileExplosion-' + Math.random(), 300, scene);
+        explosion.particleTexture = explosionTexture;
+        explosion.emitter = impactPos;
+        explosion.minEmitPower = 30;
+        explosion.maxEmitPower = 85;
+        explosion.minLifeTime = 0.2;
+        explosion.maxLifeTime = 0.45;
+        explosion.minSize = 1.2;
+        explosion.maxSize = 4.5;
+        explosion.direction1 = new BABYLON.Vector3(-1, -1, -1);
+        explosion.direction2 = new BABYLON.Vector3(1, 1, 1);
+        explosion.gravity = new BABYLON.Vector3(0, -18, 0);
+        explosion.emitRate = 0;
+        explosion.disposeOnStop = true;
+        explosion.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+        explosion.manualEmitCount = 260;
+        explosion.start();
+        setTimeout(() => explosion.stop(), 180);
+      }
+
+      function handleMissileImpact(missile, message) {
+        if (!missile.alive) return;
+        spawnExplosion(missile.position);
+        missile.alive = false;
+        missile.mesh.dispose();
+        cameraRigState.missileZoom = Math.max(cameraRigState.missileZoom, cameraRigState.missileZoomDuration * 0.5);
+        if (message) addLog(message);
+      }
+
+      function forwardVector() { return new BABYLON.Vector3(0, 1, 0).rotateByQuaternionToRef(jetState.orientation, new BABYLON.Vector3()); }
+      function rightVector() { return new BABYLON.Vector3(1, 0, 0).rotateByQuaternionToRef(jetState.orientation, new BABYLON.Vector3()); }
+      function upVector() { return new BABYLON.Vector3(0, 0, 1).rotateByQuaternionToRef(jetState.orientation, new BABYLON.Vector3()); }
+      function crosshairDirection() {
+        const width = engine.getRenderWidth(true);
+        const height = engine.getRenderHeight(true);
+        const screenX = width * 0.5 + input.crosshairX;
+        const screenY = height * 0.5 + input.crosshairY;
+        const world = BABYLON.Matrix.Identity();
+        const origin = BABYLON.Vector3.Unproject(new BABYLON.Vector3(screenX, screenY, 0), width, height, world, camera.getViewMatrix(), camera.getProjectionMatrix());
+        const target = BABYLON.Vector3.Unproject(new BABYLON.Vector3(screenX, screenY, 1), width, height, world, camera.getViewMatrix(), camera.getProjectionMatrix());
+        return target.subtract(origin).normalize();
+      }
+
+      function updateInputs(dt) {
+        const keyboardPitch = (input.keys['KeyS'] ? 1 : 0) - (input.keys['KeyW'] ? 1 : 0);
+        const keyboardRoll = (input.keys['KeyD'] ? 1 : 0) - (input.keys['KeyA'] ? 1 : 0);
+        const keyboardYaw = (input.keys['KeyE'] ? 1 : 0) - (input.keys['KeyQ'] ? 1 : 0);
+        const targetPitch = clamp(keyboardPitch * 0.8, -0.9, 0.9);
+        const targetRoll = clamp(keyboardRoll * 0.9, -0.9, 0.9);
+        const targetYaw = clamp(keyboardYaw * 0.6, -0.6, 0.6);
+        const response = 1 - Math.exp(-dt * 10);
+        controls.pitchInput += (targetPitch - controls.pitchInput) * response;
+        controls.rollInput += (targetRoll - controls.rollInput) * response;
+        controls.yawInput += (targetYaw - controls.yawInput) * response;
+        if (input.keys['ShiftLeft']) controls.throttleTarget += dt * 0.4;
+        if (input.keys['ControlLeft']) controls.throttleTarget -= dt * 0.4;
+        controls.throttleTarget = clamp(controls.throttleTarget, 0, 1.1);
+        const throttleResponse = 1 - Math.exp(-dt * 3);
+        controls.throttle += (controls.throttleTarget - controls.throttle) * throttleResponse;
+      }
+
+      function atmosphereDensity(alt) {
+        const rho0 = 1.225;
+        const h = Math.max(0, alt);
+        return rho0 * Math.exp(-h / 8500);
+      }
+
+      function computeAerodynamics(state) {
+        const fwd = forwardVector();
+        const up = upVector();
+        const vel = state.velocity;
+        const speed = vel.length();
+        if (speed < 0.1) return { lift: BABYLON.Vector3.Zero(), drag: BABYLON.Vector3.Zero(), aoa: 0 };
+        const vDir = vel.normalizeToNew();
+        const aoa = BABYLON.Vector3.Dot(vDir, fwd);
+        const alpha = Math.acos(clamp(aoa, -1, 1));
+        const aoaSigned = BABYLON.Vector3.Dot(vel, up) >= 0 ? alpha : -alpha;
+        const rho = atmosphereDensity(state.position.y);
+        const wingArea = 38;
+        const clAlpha = 5.5;
+        const cl = clamp(clAlpha * aoaSigned, -1.8, 1.8);
+        const liftMag = 0.5 * rho * speed * speed * wingArea * cl;
+        const liftDir = BABYLON.Vector3.Cross(vDir, rightVector()).normalizeToNew();
+        const dragCd0 = 0.02;
+        const dragCd = dragCd0 + Math.abs(cl) * 0.02 + controls.afterburner * 0.01;
+        const dragMag = 0.5 * rho * speed * speed * wingArea * dragCd;
+        const drag = vDir.scale(-dragMag);
+        const lift = liftDir.scale(liftMag);
+        return { lift, drag, aoa: aoaSigned };
+      }
+
+      function computeThrust() {
+        const base = controls.afterburner ? 160000 : 110000;
+        return base * controls.throttle;
+      }
+
+      function computeTorques(alpha, state) {
+        const angVel = state.angularVelocity;
+        const pitchTorque = controls.pitch * 65000 - alpha * 18000 - angVel.z * 32000;
+        const rollTorque = controls.roll * 90000 - angVel.x * 36000;
+        const yawTorque = controls.yaw * 45000 - angVel.y * 22000;
+        return new BABYLON.Vector3(rollTorque, yawTorque, pitchTorque);
+      }
+
+      function integrate(state, dt) {
+        const g = new BABYLON.Vector3(0, -9.81, 0);
+        const aero = computeAerodynamics(state);
+        const thrustMag = computeThrust();
+        const thrust = forwardVector().scale(thrustMag);
+        const weight = g.scale(state.mass);
+        const totalForce = thrust.add(aero.lift).add(aero.drag).add(weight);
+        const acc = totalForce.scale(1 / state.mass);
+        state.velocity.addInPlace(acc.scale(dt));
+        state.position.addInPlace(state.velocity.scale(dt));
+        const torques = computeTorques(aero.aoa, state);
+        const angAcc = torques.scale(1 / (state.mass * 0.2));
+        state.angularVelocity.addInPlace(angAcc.scale(dt));
+        const angVelQuat = new BABYLON.Quaternion(state.angularVelocity.x * dt * 0.5, state.angularVelocity.y * dt * 0.5, state.angularVelocity.z * dt * 0.5, 0);
+        state.orientation = state.orientation.add(state.orientation.multiply(angVelQuat));
+        state.orientation.normalize();
+        const angDamp = Math.max(0, 1 - dt * 1.2);
+        state.angularVelocity.scaleInPlace(angDamp);
+        if (state.position.y < terrain.getHeightAtCoordinates(state.position.x, state.position.z) + 5) {
+          state.position.y = terrain.getHeightAtCoordinates(state.position.x, state.position.z) + 5;
+          state.velocity.y = Math.max(0, state.velocity.y * -0.2);
+        }
+      }
+
+      function resetAttitude() {
+        jetState.orientation = BABYLON.Quaternion.Identity();
+        jetState.angularVelocity = BABYLON.Vector3.Zero();
+        addLog('Attitude reset');
+      }
+
+      function spawnMissileMesh() {
+        const m = missileTemplate.clone('missile-' + Math.random());
+        m.setEnabled(true);
+        m.position = BABYLON.Vector3.Zero();
+        m.rotation = BABYLON.Vector3.Zero();
+        shadowGen.addShadowCaster(m);
+        return m;
+      }
+
+      function fireMissile() {
+        if (!controls.masterArm) { addLog('Cannot fire: MASTER ARM SAFE'); return; }
+        const mesh = spawnMissileMesh();
+        const right = rightVector();
+        const up = upVector();
+        const aimDir = crosshairDirection();
+        const railSide = missileLaunchIndex % 2 === 0 ? 1 : -1;
+        missileLaunchIndex += 1;
+        const muzzleForward = aimDir.scale(2.5);
+        const offset = right.scale(railSide * 1.2).add(up.scale(-0.8)).add(muzzleForward);
+        mesh.position = jetState.position.add(offset);
+        mesh.lookAt(mesh.position.add(aimDir));
+        const initialVelocity = jetState.velocity.add(aimDir.scale(220));
+        const state = {
+          position: mesh.position.clone(),
+          velocity: initialVelocity,
+          direction: aimDir.clone(),
+          alive: true,
+          time: 0,
+          thrust: 65000,
+          mass: 85,
+          mesh,
+        };
+        missiles.push(state);
+        cameraRigState.missileZoom = cameraRigState.missileZoomDuration;
+        ui.badgeMissiles.textContent = 'MISSILES: ∞';
+        addLog('Missile away');
+      }
+
+      function stepMissile(m, dt) {
+        if (!m.alive) return;
+        const rho = atmosphereDensity(m.position.y);
+        const speed = m.velocity.length();
+        let fwd;
+        if (speed > 0.5) {
+          fwd = m.velocity.normalizeToNew();
+          m.direction.copyFrom(fwd);
+        } else {
+          fwd = m.direction;
+        }
+        const dragCd = 0.04;
+        const area = 0.025;
+        const dragMag = 0.5 * rho * speed * speed * area * dragCd;
+        const dragDir = speed > 0.001 ? m.velocity.normalizeToNew() : fwd;
+        const drag = dragDir.scale(-dragMag);
+        const thrust = fwd.scale(m.thrust);
+        const acc = thrust.add(drag).add(new BABYLON.Vector3(0, -9.81 * m.mass, 0)).scale(1 / m.mass);
+        m.velocity.addInPlace(acc.scale(dt));
+        m.position.addInPlace(m.velocity.scale(dt));
+        m.mesh.position.copyFrom(m.position);
+        m.mesh.lookAt(m.position.add(fwd));
+        m.time += dt;
+        const groundHeight = terrain.getHeightAtCoordinates(m.position.x, m.position.z) + 2;
+        if (m.position.y <= groundHeight) {
+          handleMissileImpact(m, 'Missile impact');
+          return;
+        }
+        if (m.time > 24) {
+          m.alive = false;
+          m.mesh.dispose();
+          return;
+        }
+        for (let i = 0; i < targets.length; i++) {
+          if (!m.alive) break;
+          const t = targets[i];
+          if (t.alive && BABYLON.Vector3.DistanceSquared(t.mesh.position, m.position) < 36) {
+            t.alive = false;
+            t.mesh.dispose();
+            handleMissileImpact(m, 'Target destroyed');
+          }
+        }
+      }
+
+      function updateCameraRig(dt) {
+        const aimTarget = input.aiming ? 1 : 0;
+        cameraRigState.aimAmount += (aimTarget - cameraRigState.aimAmount) * (1 - Math.exp(-dt * 8));
+        if (cameraRigState.missileZoom > 0) {
+          cameraRigState.missileZoom = Math.max(0, cameraRigState.missileZoom - dt);
+        }
+
+        const backOffset = forwardVector().scale(-cameraRigState.distanceBack);
+        const upOffset = upVector().scale(cameraRigState.height);
+        const lateralOffset = rightVector().scale(cameraRigState.lateral);
+        cameraRigState.tmpPos.copyFrom(jetState.position);
+        cameraRigState.tmpPos.addInPlace(backOffset);
+        cameraRigState.tmpPos.addInPlace(upOffset);
+        cameraRigState.tmpPos.addInPlace(lateralOffset);
+        camPivot.position.copyFrom(cameraRigState.tmpPos);
+        if (!camPivot.rotationQuaternion) {
+          camPivot.rotationQuaternion = BABYLON.Quaternion.Identity();
+        }
+        camPivot.rotationQuaternion.copyFrom(jetState.orientation);
+
+        cameraRigState.tmpTarget.copyFrom(jetState.position);
+        cameraRigState.tmpTarget.addInPlace(forwardVector().scale(50));
+        cameraRigState.tmpTarget.addInPlace(upVector().scale(2.5 * jetScale));
+        camera.setTarget(cameraRigState.tmpTarget);
+
+        let targetFov = cameraRigState.fovBase;
+        targetFov = BABYLON.Scalar.Lerp(targetFov, cameraRigState.fovAim, cameraRigState.aimAmount);
+        if (cameraRigState.missileZoom > 0) {
+          const missileBlend = cameraRigState.missileZoom / cameraRigState.missileZoomDuration;
+          targetFov = BABYLON.Scalar.Lerp(targetFov, cameraRigState.fovMissile, missileBlend);
+        }
+        camera.fov = BABYLON.Scalar.Lerp(camera.fov, targetFov, 1 - Math.exp(-dt * 6));
+      }
+
+      function updateHUD(dt) {
+        ui.hudThrottle.textContent = Math.round(controls.throttle * 100) + '%';
+        ui.hudSpeed.textContent = Math.round(jetState.velocity.length() * 1.94384) + ' kts';
+        ui.hudAltitude.textContent = Math.round(jetState.position.y * 3.28084) + ' ft';
+        const fwd = forwardVector();
+        const heading = Math.atan2(fwd.x, fwd.z) * 180 / Math.PI;
+        ui.hudHeading.textContent = ((heading + 360) % 360).toFixed(0) + '°';
+        const pitchAngle = Math.asin(fwd.y) * 180 / Math.PI;
+        ui.hudPitch.textContent = pitchAngle.toFixed(1) + '°';
+        const rollVec = rightVector();
+        const rollAngle = Math.atan2(rollVec.y, rollVec.x) * 180 / Math.PI;
+        ui.hudRoll.textContent = rollAngle.toFixed(1) + '°';
+        document.getElementById('tile-throttle').textContent = ui.hudThrottle.textContent;
+        document.getElementById('bar-throttle').style.width = Math.min(100, controls.throttle * 100) + '%';
+        document.getElementById('tile-pitch').textContent = ui.hudPitch.textContent;
+        document.getElementById('tile-roll').textContent = ui.hudRoll.textContent;
+        document.getElementById('tile-yaw').textContent = (controls.yaw * 45).toFixed(0) + '°/s';
+        document.getElementById('tile-fuel').textContent = jetState.fuel.toFixed(0) + '%';
+        document.getElementById('bar-fuel').style.width = jetState.fuel + '%';
+        ui.badgeTargets.textContent = 'TARGETS: ' + targets.filter(t => t.alive).length;
+      }
+
+      function animateIndicators(dt) {
+        const r = () => Math.random();
+        document.getElementById('bar-radar').style.width = (60 + r() * 20) + '%';
+        document.getElementById('tile-radar').textContent = r() > 0.5 ? 'SWEEP' : 'TRACK';
+        document.getElementById('tile-aoa').textContent = (computeAerodynamics(jetState).aoa * 57.3).toFixed(1) + '°';
+        document.getElementById('dial-aoa').style.width = (Math.abs(computeAerodynamics(jetState).aoa) * 120).toFixed(1) + '%';
+        document.getElementById('tile-icing').textContent = jetState.position.y > 8000 ? 'WATCH' : 'CLEAR';
+      }
+
+      function step(dt) {
+        updateInputs(dt);
+        if (autopilot.enabled) {
+          const headingError = ((autopilot.targetHdg - Math.atan2(forwardVector().x, forwardVector().z) * 180 / Math.PI + 540) % 360) - 180;
+          controls.yawInput = clamp(headingError / 60, -0.4, 0.4);
+          controls.rollInput = clamp(-headingError / 90, -0.5, 0.5);
+          const altError = (autopilot.targetAlt - jetState.position.y);
+          controls.pitchInput = clamp(-altError / 800, -0.45, 0.45);
+        }
+        const controlBlend = 1 - Math.exp(-dt * 6);
+        controls.pitch += (controls.pitchInput - controls.pitch) * controlBlend;
+        controls.roll += (controls.rollInput - controls.roll) * controlBlend;
+        controls.yaw += (controls.yawInput - controls.yaw) * controlBlend;
+        integrate(jetState, dt);
+        jetRoot.position.copyFrom(jetState.position);
+        jetRoot.rotationQuaternion = jetState.orientation;
+        missiles.forEach(m => stepMissile(m, dt));
+        for (let i = missiles.length - 1; i >= 0; i--) if (!missiles[i].alive) missiles.splice(i, 1);
+        updateCameraRig(dt);
+        animateIndicators(dt);
+        updateHUD(dt);
+      }
+
+      let last = performance.now();
+      engine.runRenderLoop(() => {
+        const now = performance.now();
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        step(dt);
+        ui.badgeFps.textContent = 'FPS: ' + engine.getFps().toFixed(0);
+        scene.render();
+      });
+
+      window.addEventListener('resize', () => engine.resize());
+      addLog('Simulation initialized');
+      return scene;
+    }
+
+    const scene = createScene();
+  </script>
+</body>
+</html>
+        jetRoot.position.copyFrom(jetState.position);
+        jetRoot.rotationQuaternion = jetState.orientation;
+        missiles.forEach(m => stepMissile(m, dt));
+        for (let i = missiles.length - 1; i >= 0; i--) if (!missiles[i].alive) missiles.splice(i, 1);
+        updateCameraRig(dt);
+        const targetFov = BABYLON.Tools.ToRadians(70 + controls.throttle * 8 + Math.min(12, jetState.velocity.length() * 0.02));
+        camera.fov = BABYLON.Scalar.Lerp(camera.fov, targetFov, 1 - Math.exp(-dt * 4));
+        animateIndicators(dt);
+        updateHUD(dt);
+      }
+
+      let last = performance.now();
+      engine.runRenderLoop(() => {
+        const now = performance.now();
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        step(dt);
+        ui.badgeFps.textContent = 'FPS: ' + engine.getFps().toFixed(0);
+        scene.render();
+      });
+
+      window.addEventListener('resize', () => engine.resize());
+      addLog('Simulation initialized');
+      return scene;
+    }
+
+    const scene = createScene();
+  </script>
+</body>
+</html>
