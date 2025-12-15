@@ -628,6 +628,138 @@
 
     function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
 
+    class ProjectilePhysicsEngine {
+      constructor(config, initialState) {
+        const defaults = {
+          gravity: 9.81,
+          airDensity: 1.225,
+          dragCoefficient: 0.47,
+          mass: 1,
+          area: 0.01,
+          dragModel: 'quadratic',
+          integrator: 'rk4',
+          linearDrag: 0,
+          variableGravity: true,
+          variableDensity: true,
+          scaleHeight: 8500,
+          earthRadius: 6371000,
+          windVector: new BABYLON.Vector3()
+        };
+        this.config = { ...defaults, ...config };
+        this.config.windVector = config.windVector ? config.windVector.clone() : defaults.windVector.clone();
+        this.linearDragOverMass = this.config.linearDrag / this.config.mass;
+        this.state = {
+          position: initialState.position.clone(),
+          velocity: initialState.velocity.clone()
+        };
+        this.elapsed = 0;
+      }
+
+      setWind(vector) {
+        this.config.windVector.copyFrom(vector);
+      }
+
+      getSpeed() {
+        return this.state.velocity.length();
+      }
+
+      step(dt) {
+        // Equations (20)-(24): classical RK4 integrator defaults with Euler fallback
+        if (this.config.integrator === 'rk4') {
+          this.state = this.rk4Step(this.state, dt);
+        } else {
+          this.state = this.eulerStep(this.state, dt);
+        }
+        this.elapsed += dt;
+        return this.state;
+      }
+
+      gravityAtAltitude(height) {
+        if (!this.config.variableGravity) return this.config.gravity;
+        const alt = Math.max(0, height);
+        const denom = this.config.earthRadius + alt;
+        return this.config.gravity * Math.pow(this.config.earthRadius / denom, 2);
+      }
+
+      densityAtAltitude(height) {
+        if (!this.config.variableDensity) return this.config.airDensity;
+        const alt = Math.max(0, height);
+        return this.config.airDensity * Math.exp(-alt / this.config.scaleHeight);
+      }
+
+      acceleration(state) {
+        // Equation (15): state derivative formed from gravity plus drag components
+        const accel = new BABYLON.Vector3(0, -this.gravityAtAltitude(state.position.y), 0);
+        if (this.config.dragModel === 'none') {
+          return accel;
+        }
+
+        const relativeVelocity = state.velocity.clone().subtract(this.config.windVector);
+        const speed = relativeVelocity.length();
+        if (speed < 0.0001) {
+          return accel;
+        }
+
+        if (this.config.dragModel === 'linear' && this.linearDragOverMass > 0) {
+          // Linear drag extension (Section 4.1)
+          accel.addInPlace(relativeVelocity.scale(-this.linearDragOverMass));
+          return accel;
+        }
+
+        // Equations (12)-(14): quadratic drag using k = 0.5 * Cd * rho * A / m
+        const rho = this.densityAtAltitude(state.position.y);
+        const k = 0.5 * this.config.dragCoefficient * rho * this.config.area / this.config.mass;
+        accel.addInPlace(relativeVelocity.scale(-k * speed));
+        return accel;
+      }
+
+      rk4Step(state, dt) {
+        const k1Pos = state.velocity.clone();
+        const k1Vel = this.acceleration(state);
+
+        const state2 = {
+          position: state.position.clone().add(k1Pos.clone().scale(dt * 0.5)),
+          velocity: state.velocity.clone().add(k1Vel.clone().scale(dt * 0.5))
+        };
+        const k2Pos = state2.velocity.clone();
+        const k2Vel = this.acceleration(state2);
+
+        const state3 = {
+          position: state.position.clone().add(k2Pos.clone().scale(dt * 0.5)),
+          velocity: state.velocity.clone().add(k2Vel.clone().scale(dt * 0.5))
+        };
+        const k3Pos = state3.velocity.clone();
+        const k3Vel = this.acceleration(state3);
+
+        const state4 = {
+          position: state.position.clone().add(k3Pos.clone().scale(dt)),
+          velocity: state.velocity.clone().add(k3Vel.clone().scale(dt))
+        };
+        const k4Pos = state4.velocity.clone();
+        const k4Vel = this.acceleration(state4);
+
+        const newPosition = state.position.clone()
+          .add(k1Pos.scale(dt / 6))
+          .add(k2Pos.scale(dt / 3))
+          .add(k3Pos.scale(dt / 3))
+          .add(k4Pos.scale(dt / 6));
+        const newVelocity = state.velocity.clone()
+          .add(k1Vel.scale(dt / 6))
+          .add(k2Vel.scale(dt / 3))
+          .add(k3Vel.scale(dt / 3))
+          .add(k4Vel.scale(dt / 6));
+        return { position: newPosition, velocity: newVelocity };
+      }
+
+      eulerStep(state, dt) {
+        // Equations (16)-(19): simple Euler advance
+        const accel = this.acceleration(state);
+        const newVelocity = state.velocity.clone().add(accel.clone().scale(dt));
+        const newPosition = state.position.clone().add(state.velocity.clone().scale(dt));
+        return { position: newPosition, velocity: newVelocity };
+      }
+    }
+
     function createScene() {
       const scene = new BABYLON.Scene(engine);
       scene.clearColor = new BABYLON.Color4(0.02, 0.03, 0.06, 1);
@@ -1008,7 +1140,10 @@
       document.getElementById('btn-reset-view').onclick = () => resetAttitude();
       document.getElementById('btn-spawn-target').onclick = () => spawnTarget();
       document.getElementById('btn-clear-missiles').onclick = () => {
-        missiles.forEach(m => m.mesh.dispose());
+        missiles.forEach(m => {
+          m.mesh.dispose();
+          m.alive = false;
+        });
         missiles.length = 0;
       };
 
@@ -1084,7 +1219,8 @@
 
       function handleMissileImpact(missile, message) {
         if (!missile.alive) return;
-        spawnExplosion(missile.position);
+        const impactPos = missile.solver ? missile.solver.state.position.clone() : BABYLON.Vector3.Zero();
+        spawnExplosion(impactPos);
         missile.alive = false;
         missile.mesh.dispose();
         cameraRigState.missileZoom = Math.max(cameraRigState.missileZoom, cameraRigState.missileZoomDuration * 0.5);
@@ -1213,20 +1349,33 @@
         const aimDir = crosshairDirection();
         const railSide = missileLaunchIndex % 2 === 0 ? 1 : -1;
         missileLaunchIndex += 1;
-        const muzzleForward = aimDir.scale(2.5);
+        const muzzleForward = aimDir.clone().scale(2.5);
         const offset = right.scale(railSide * 1.2).add(up.scale(-0.8)).add(muzzleForward);
-        mesh.position = jetState.position.add(offset);
-        mesh.lookAt(mesh.position.add(aimDir));
-        const initialVelocity = jetState.velocity.add(aimDir.scale(220));
-        const state = {
+        const spawnPosition = jetState.position.add(offset);
+        mesh.position.copyFrom(spawnPosition);
+        mesh.lookAt(mesh.position.add(aimDir.clone()));
+        const initialVelocity = jetState.velocity.clone().add(aimDir.clone().scale(220));
+        const solver = new ProjectilePhysicsEngine({
+          mass: 85,
+          area: Math.PI * Math.pow(0.15, 2),
+          dragCoefficient: 0.42,
+          gravity: 9.81,
+          airDensity: 1.225,
+          dragModel: 'quadratic',
+          integrator: 'rk4',
+          variableGravity: true,
+          variableDensity: true,
+          scaleHeight: 8500,
+          windVector: new BABYLON.Vector3()
+        }, {
           position: mesh.position.clone(),
-          velocity: initialVelocity,
-          direction: aimDir.clone(),
+          velocity: initialVelocity
+        });
+        const state = {
+          solver,
           alive: true,
           time: 0,
-          thrust: 65000,
-          mass: 85,
-          mesh,
+          mesh
         };
         missiles.push(state);
         cameraRigState.missileZoom = cameraRigState.missileZoomDuration;
@@ -1236,29 +1385,17 @@
 
       function stepMissile(m, dt) {
         if (!m.alive) return;
-        const rho = atmosphereDensity(m.position.y);
-        const speed = m.velocity.length();
-        let fwd;
-        if (speed > 0.5) {
-          fwd = m.velocity.normalizeToNew();
-          m.direction.copyFrom(fwd);
-        } else {
-          fwd = m.direction;
-        }
-        const dragCd = 0.04;
-        const area = 0.025;
-        const dragMag = 0.5 * rho * speed * speed * area * dragCd;
-        const dragDir = speed > 0.001 ? m.velocity.normalizeToNew() : fwd;
-        const drag = dragDir.scale(-dragMag);
-        const thrust = fwd.scale(m.thrust);
-        const acc = thrust.add(drag).add(new BABYLON.Vector3(0, -9.81 * m.mass, 0)).scale(1 / m.mass);
-        m.velocity.addInPlace(acc.scale(dt));
-        m.position.addInPlace(m.velocity.scale(dt));
-        m.mesh.position.copyFrom(m.position);
-        m.mesh.lookAt(m.position.add(fwd));
+        m.solver.step(dt);
         m.time += dt;
-        const groundHeight = terrain.getHeightAtCoordinates(m.position.x, m.position.z) + 2;
-        if (m.position.y <= groundHeight) {
+        const pos = m.solver.state.position;
+        const vel = m.solver.state.velocity;
+        m.mesh.position.copyFrom(pos);
+        if (vel.lengthSquared() > 0.001) {
+          const lookTarget = pos.add(vel.normalizeToNew());
+          m.mesh.lookAt(lookTarget);
+        }
+        const groundHeight = terrain.getHeightAtCoordinates(pos.x, pos.z) + 2;
+        if (pos.y <= groundHeight) {
           handleMissileImpact(m, 'Missile impact');
           return;
         }
@@ -1270,7 +1407,7 @@
         for (let i = 0; i < targets.length; i++) {
           if (!m.alive) break;
           const t = targets[i];
-          if (t.alive && BABYLON.Vector3.DistanceSquared(t.mesh.position, m.position) < 36) {
+          if (t.alive && BABYLON.Vector3.DistanceSquared(t.mesh.position, pos) < 36) {
             t.alive = false;
             t.mesh.dispose();
             handleMissileImpact(m, 'Target destroyed');
