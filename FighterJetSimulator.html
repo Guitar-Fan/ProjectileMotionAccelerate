@@ -190,17 +190,23 @@
       overflow: hidden;
     }
     #control-board {
-      background: radial-gradient(circle at 20% 20%, rgba(25, 45, 76, 0.5), rgba(10, 18, 32, 0.8));
+      background: radial-gradient(circle at 20% 20%, rgba(25, 45, 76, 0.5), rgba(10, 18, 32, 0.95));
       border: 1px solid rgba(57, 210, 255, 0.2);
-      border-radius: 10px;
+      border-radius: 14px;
       box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.55);
-      padding: 12px;
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      grid-auto-rows: minmax(44px, auto);
-      gap: 8px;
-      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: hidden;
       position: relative;
+    }
+    .board-content {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      z-index: 1;
     }
     .tile {
       background: linear-gradient(180deg, rgba(17, 28, 46, 0.9), rgba(8, 14, 23, 0.95));
@@ -240,9 +246,35 @@
       width: 45%;
       box-shadow: var(--glow);
     }
-    #right-panel {
+    .board-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .section-title {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      font-family: var(--font-1);
+      color: rgba(215, 232, 255, 0.9);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-transform: uppercase;
+    }
+    .section-hint {
+      font-family: var(--font-2);
+      letter-spacing: 0;
+      font-size: 11px;
+      color: rgba(215, 232, 255, 0.55);
+    }
+    .section-grid {
       display: grid;
-      grid-template-rows: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    #right-panel {
+      display: flex;
+      flex-direction: column;
       gap: 10px;
     }
     .card {
@@ -255,11 +287,48 @@
       flex-direction: column;
       gap: 10px;
     }
+    .card.compact {
+      gap: 6px;
+    }
     .card h4 {
       font-family: var(--font-1);
       letter-spacing: 0.14em;
       font-size: 12px;
       color: var(--accent);
+    }
+    #tactical-map-card canvas {
+      width: 100%;
+      height: 220px;
+      border-radius: 12px;
+      border: 1px solid rgba(57, 210, 255, 0.25);
+      background: radial-gradient(circle at 20% 20%, rgba(10, 18, 32, 0.85), rgba(4, 7, 13, 0.95));
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.65);
+    }
+    #tactical-map-legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: rgba(215, 232, 255, 0.65);
+    }
+    #tactical-map-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #tactical-map-legend .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(57, 210, 255, 0.6);
+      background: rgba(57, 210, 255, 0.35);
+      box-shadow: 0 0 8px rgba(57, 210, 255, 0.4);
+    }
+    #tactical-map-legend .dot.missile {
+      border-color: rgba(255, 179, 71, 0.8);
+      background: rgba(255, 179, 71, 0.6);
+      box-shadow: 0 0 8px rgba(255, 179, 71, 0.5);
     }
     .log {
       flex: 1;
@@ -290,6 +359,65 @@
     }
     .btn:hover { background: rgba(57, 210, 255, 0.18); }
     .btn:active { transform: translateY(1px); }
+    .btn.small {
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+    .btn.ghost {
+      background: transparent;
+      border-color: rgba(57, 210, 255, 0.3);
+    }
+    .btn.toggled {
+      background: rgba(57, 210, 255, 0.25);
+      border-color: rgba(57, 210, 255, 0.65);
+      box-shadow: var(--glow);
+    }
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(57, 210, 255, 0.25);
+      font-size: 11px;
+      background: rgba(57, 210, 255, 0.08);
+      letter-spacing: 0.05em;
+    }
+    .chip.ghost {
+      background: transparent;
+      border-style: dashed;
+      cursor: pointer;
+    }
+    .chip strong { color: var(--accent-2); margin-left: 4px; }
+    .drawer {
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    #assist-card label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: rgba(215, 232, 255, 0.8);
+      display: flex;
+      justify-content: space-between;
+      text-transform: uppercase;
+    }
+    #assist-card input[type=range] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .assist-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
     /* Decorative grids to add visual density */
     .grid-lines {
       position: absolute;
@@ -331,6 +459,28 @@
       background: linear-gradient(90deg, var(--accent-3), var(--accent));
       box-shadow: 0 0 10px rgba(255, 95, 109, 0.4);
     }
+    #focus-indicator { display: none; }
+    body.focus-mode #ui-shell {
+      height: 72px;
+      transition: height 0.3s ease, opacity 0.3s ease;
+      opacity: 0.4;
+    }
+    body.focus-mode #dashboard {
+      max-height: 0;
+      height: 0;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    body.focus-mode #panel-header {
+      border-bottom: none;
+    }
+    body.focus-mode #focus-indicator {
+      display: inline-flex;
+    }
+    body.focus-mode #hud-overlay .telemetry {
+      border-color: rgba(57, 210, 255, 0.4);
+    }
     /* Scrollbar styling */
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-thumb { background: rgba(57, 210, 255, 0.25); border-radius: 10px; border: 2px solid rgba(0,0,0,0.3); }
@@ -352,6 +502,7 @@
       <div class="pill" id="mode-pill">NAV MODE</div>
       <div class="pill" id="weapon-pill">SAFE</div>
       <div class="pill" id="status-pill">ENGINES HOT</div>
+      <div class="pill" id="focus-indicator">PRESS H TO EXIT FOCUS</div>
     </div>
     <div class="telemetry">
       <h3>PILOT TELEMETRY</h3>
@@ -375,190 +526,45 @@
     <div id="dashboard">
       <div id="control-board">
         <div class="grid-lines"></div>
-        <!-- Intricate control board populated with repeated tiles for visual richness and to satisfy requested size -->
-        <div class="tile"><div class="label">THROTTLE</div><div class="value" id="tile-throttle">0%</div><div class="bar"><span id="bar-throttle"></span></div></div>
-        <div class="tile"><div class="label">AFTERBURN</div><div class="value" id="tile-afterburn">OFF</div><div class="led-row"><div class="led"></div><div class="led amber"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">FLAPS</div><div class="value" id="tile-flaps">AUTO</div><div class="dial"><div class="indicator" id="dial-flaps"></div></div></div>
-        <div class="tile"><div class="label">GEAR</div><div class="value" id="tile-gear">UP</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">PITCH</div><div class="value" id="tile-pitch">0°</div><div class="bar"><span id="bar-pitch"></span></div></div>
-        <div class="tile"><div class="label">ROLL</div><div class="value" id="tile-roll">0°</div><div class="bar"><span id="bar-roll"></span></div></div>
-        <div class="tile"><div class="label">YAW</div><div class="value" id="tile-yaw">0°/s</div><div class="bar"><span id="bar-yaw"></span></div></div>
-        <div class="tile"><div class="label">AOA</div><div class="value" id="tile-aoa">0°</div><div class="dial"><div class="indicator" id="dial-aoa"></div></div></div>
-        <div class="tile"><div class="label">FUEL</div><div class="value" id="tile-fuel">100%</div><div class="bar"><span id="bar-fuel" style="width: 100%"></span></div></div>
-        <div class="tile"><div class="label">HYDRAULICS</div><div class="value">NOMINAL</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">OXYGEN</div><div class="value">NOMINAL</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">RWR</div><div class="value">PASSIVE</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">ECM</div><div class="value">STANDBY</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led amber"></div></div></div>
-        <div class="tile"><div class="label">RADAR</div><div class="value" id="tile-radar">SWEEP</div><div class="bar"><span id="bar-radar" style="width: 70%"></span></div></div>
-        <div class="tile"><div class="label">IRST</div><div class="value">ENGAGED</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">IFF</div><div class="value">POSITIVE</div><div class="led-row"><div class="led green"></div><div class="led blue"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">NAV</div><div class="value">INS / GPS</div><div class="bar"><span style="width: 90%"></span></div></div>
-        <div class="tile"><div class="label">ALT HOLD</div><div class="value" id="tile-alt-hold">ARMED</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">HDG HOLD</div><div class="value" id="tile-hdg-hold">ARMED</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">AUTOPILOT</div><div class="value" id="tile-ap">OFF</div><div class="dial"><div class="indicator" id="dial-ap"></div></div></div>
-        <div class="tile"><div class="label">MISSILE BAY</div><div class="value" id="tile-missiles">6 READY</div><div class="bar"><span id="bar-missiles" style="width: 100%"></span></div></div>
-        <div class="tile"><div class="label">CHAFF</div><div class="value">30</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">FLARE</div><div class="value">18</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led amber"></div></div></div>
-        <div class="tile"><div class="label">COOLING</div><div class="value">OK</div><div class="dial"><div class="indicator" style="width: 48%"></div></div></div>
-        <div class="tile"><div class="label">CABIN PRESS</div><div class="value">13 psi</div><div class="bar"><span style="width: 80%"></span></div></div>
-        <div class="tile"><div class="label">BRAKE</div><div class="value">IDLE</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">NOSE WHEEL</div><div class="value">LOCK</div><div class="led-row"><div class="led"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">HOOK</div><div class="value">STOW</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">MASTER ARM</div><div class="value" id="tile-master-arm">SAFE</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">G-LIMIT</div><div class="value">+9 / -3</div><div class="dial"><div class="indicator" style="width: 68%"></div></div></div>
-        <div class="tile"><div class="label">STRUCTURE</div><div class="value">GREEN</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">ENGINE 1</div><div class="value">98% RPM</div><div class="bar"><span style="width: 98%"></span></div></div>
-        <div class="tile"><div class="label">ENGINE 2</div><div class="value">98% RPM</div><div class="bar"><span style="width: 98%"></span></div></div>
-        <div class="tile"><div class="label">OIL TEMP</div><div class="value">215 °F</div><div class="bar"><span style="width: 70%"></span></div></div>
-        <div class="tile"><div class="label">TURBINE</div><div class="value">NOMINAL</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">INTAKE ICE</div><div class="value">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">WING LOAD</div><div class="value">2.1 g</div><div class="bar"><span style="width: 21%"></span></div></div>
-        <div class="tile"><div class="label">FUSELAGE TEMP</div><div class="value">113 °F</div><div class="bar"><span style="width: 40%"></span></div></div>
-        <div class="tile"><div class="label">COMMS</div><div class="value">SECURE</div><div class="led-row"><div class="led green"></div><div class="led blue"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">DATA LINK</div><div class="value">LINK-16</div><div class="bar"><span style="width: 76%"></span></div></div>
-        <div class="tile"><div class="label">AI WINGMAN</div><div class="value">ON STATION</div><div class="led-row"><div class="led blue"></div><div class="led green"></div><div class="led blue"></div></div></div>
-        <div class="tile"><div class="label">THREAT</div><div class="value">LOW</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">STEALTH</div><div class="value">ACTIVE</div><div class="bar"><span style="width: 88%"></span></div></div>
-        <div class="tile"><div class="label">SIGNATURE</div><div class="value">-24 dBsm</div><div class="bar"><span style="width: 24%"></span></div></div>
-        <div class="tile"><div class="label">AI AUTONOMY</div><div class="value">GUARD</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">MAP MODE</div><div class="value">TERRAIN</div><div class="bar"><span style="width: 55%"></span></div></div>
-        <div class="tile"><div class="label">WEATHER RADAR</div><div class="value">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">JETTISON</div><div class="value">SAFE</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">CABIN TEMP</div><div class="value">72 °F</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">POWER BUS</div><div class="value">NOM</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">BATTERY</div><div class="value">98%</div><div class="bar"><span style="width: 98%"></span></div></div>
-        <div class="tile"><div class="label">AUX POWER</div><div class="value">READY</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">GYRO</div><div class="value">LOCKED</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">STABILIZER</div><div class="value">LIVE</div><div class="bar"><span style="width: 82%"></span></div></div>
-        <div class="tile"><div class="label">AILERON</div><div class="value">SYNC</div><div class="bar"><span style="width: 72%"></span></div></div>
-        <div class="tile"><div class="label">RUDDER</div><div class="value">SYNC</div><div class="bar"><span style="width: 76%"></span></div></div>
-        <div class="tile"><div class="label">ELEVATOR</div><div class="value">SYNC</div><div class="bar"><span style="width: 74%"></span></div></div>
-        <div class="tile"><div class="label">FLIGHT PATH</div><div class="value">STABLE</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">TACAN</div><div class="value">CH 74X</div><div class="bar"><span style="width: 74%"></span></div></div>
-        <div class="tile"><div class="label">ILS</div><div class="value">STANDBY</div><div class="bar"><span style="width: 40%"></span></div></div>
-        <div class="tile"><div class="label">GPS</div><div class="value">LOCK</div><div class="led-row"><div class="led blue"></div><div class="led green"></div><div class="led blue"></div></div></div>
-        <div class="tile"><div class="label">HUD BRIGHT</div><div class="value">65%</div><div class="bar"><span style="width: 65%"></span></div></div>
-        <div class="tile"><div class="label">MFD</div><div class="value">ONLINE</div><div class="led-row"><div class="led blue"></div><div class="led blue"></div><div class="led blue"></div></div></div>
-        <div class="tile"><div class="label">RECORDER</div><div class="value">REC</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">BLACK BOX</div><div class="value">ARMED</div><div class="bar"><span style="width: 80%"></span></div></div>
-        <div class="tile"><div class="label">CABIN LIGHT</div><div class="value">DIM</div><div class="led-row"><div class="led amber"></div><div class="led amber"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">FORMATION</div><div class="value">LEAD</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">TIMER</div><div class="value">00:00:00</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">CHECKLIST</div><div class="value">COMPLETE</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led green"></div></div></div>
-        <div class="tile"><div class="label">CABIN LEAK</div><div class="value">NONE</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">STROBE</div><div class="value">ON</div><div class="led-row"><div class="led blue"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">BEACON</div><div class="value">ON</div><div class="led-row"><div class="led amber"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">NAV LIGHT</div><div class="value">ON</div><div class="led-row"><div class="led green"></div><div class="led amber"></div><div class="led blue"></div></div></div>
-        <div class="tile"><div class="label">FLOOD</div><div class="value">OFF</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">BOARD DIM</div><div class="value">65%</div><div class="bar"><span style="width: 65%"></span></div></div>
-        <div class="tile"><div class="label">CABIN FAN</div><div class="value">AUTO</div><div class="dial"><div class="indicator" style="width: 45%"></div></div></div>
-        <div class="tile"><div class="label">EMERGENCY</div><div class="value">SAFE</div><div class="led-row"><div class="led"></div><div class="led"></div><div class="led"></div></div></div>
-        <!-- Additional blocks for advanced avionics with functional readouts -->
-        <div class="tile"><div class="label">COOLANT LOOP A</div><div class="value" id="tile-coolant-a">NOMINAL</div><div class="bar"><span id="bar-coolant-a" style="width: 72%"></span></div></div>
-        <div class="tile"><div class="label">COOLANT LOOP B</div><div class="value" id="tile-coolant-b">NOMINAL</div><div class="bar"><span id="bar-coolant-b" style="width: 69%"></span></div></div>
-        <div class="tile"><div class="label">PITOT</div><div class="value" id="tile-pitot">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">AOA VANE</div><div class="value" id="tile-aoa-vane">OK</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">CANOPY SEAL</div><div class="value" id="tile-canopy">LOCK</div><div class="bar"><span style="width: 88%"></span></div></div>
-        <div class="tile"><div class="label">ECS</div><div class="value" id="tile-ecs">NORMAL</div><div class="bar"><span style="width: 63%"></span></div></div>
-        <div class="tile"><div class="label">CABIN CO2</div><div class="value" id="tile-co2">SAFE</div><div class="bar"><span style="width: 25%"></span></div></div>
-        <div class="tile"><div class="label">GPS SAT</div><div class="value" id="tile-gps-sat">10</div><div class="bar"><span style="width: 83%"></span></div></div>
-        <div class="tile"><div class="label">INS DRIFT</div><div class="value" id="tile-ins-drift">LOW</div><div class="bar"><span style="width: 12%"></span></div></div>
-        <div class="tile"><div class="label">BRAKE TEMP</div><div class="value" id="tile-brake-temp">120 °F</div><div class="bar"><span style="width: 35%"></span></div></div>
-        <div class="tile"><div class="label">WING FLEX</div><div class="value" id="tile-wing-flex">0.3°</div><div class="bar"><span style="width: 18%"></span></div></div>
-        <div class="tile"><div class="label">STRUCTURAL MON</div><div class="value" id="tile-struct-mon">GREEN</div><div class="led-row"><div class="led green"></div><div class="led green"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">MISSILE HEAT</div><div class="value" id="tile-missile-heat">COOL</div><div class="bar"><span style="width: 44%"></span></div></div>
-        <div class="tile"><div class="label">RANGEFINDER</div><div class="value" id="tile-range">LOCK</div><div class="led-row"><div class="led green"></div><div class="led blue"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">TURRET CAM</div><div class="value" id="tile-turret">STOW</div><div class="bar"><span style="width: 8%"></span></div></div>
-        <div class="tile"><div class="label">SENSOR FUSION</div><div class="value" id="tile-fusion">ON</div><div class="bar"><span style="width: 91%"></span></div></div>
-        <div class="tile"><div class="label">AUTO TRIM</div><div class="value" id="tile-trim">ON</div><div class="bar"><span style="width: 66%"></span></div></div>
-        <div class="tile"><div class="label">BINGO FUEL</div><div class="value" id="tile-bingo">2500 lbs</div><div class="bar"><span style="width: 25%"></span></div></div>
-        <div class="tile"><div class="label">MISSION TIMER</div><div class="value" id="tile-mission">00:15:33</div><div class="bar"><span style="width: 30%"></span></div></div>
-        <div class="tile"><div class="label">AUTO GCAS</div><div class="value" id="tile-gcas">ARMED</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">MAG VAR</div><div class="value" id="tile-mag">-4.1°</div><div class="bar"><span style="width: 41%"></span></div></div>
-        <div class="tile"><div class="label">WIND</div><div class="value" id="tile-wind">6 kts</div><div class="bar"><span style="width: 12%"></span></div></div>
-        <div class="tile"><div class="label">DATALINK PKT</div><div class="value" id="tile-datalink">OK</div><div class="bar"><span style="width: 77%"></span></div></div>
-        <div class="tile"><div class="label">SAT UPLINK</div><div class="value" id="tile-sat">SYNC</div><div class="bar"><span style="width: 82%"></span></div></div>
-        <div class="tile"><div class="label">RCS PANEL</div><div class="value" id="tile-rcs">LOW</div><div class="bar"><span style="width: 18%"></span></div></div>
-        <div class="tile"><div class="label">HELMET CAM</div><div class="value" id="tile-helmet">LIVE</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">HMD ALIGN</div><div class="value" id="tile-hmd">GOOD</div><div class="bar"><span style="width: 71%"></span></div></div>
-        <div class="tile"><div class="label">OBOGS</div><div class="value" id="tile-obogs">ON</div><div class="bar"><span style="width: 76%"></span></div></div>
-        <div class="tile"><div class="label">CANOPY TEMP</div><div class="value" id="tile-canopy-temp">58 °F</div><div class="bar"><span style="width: 58%"></span></div></div>
-        <div class="tile"><div class="label">WING ICING</div><div class="value" id="tile-icing">CLEAR</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
-        <div class="tile"><div class="label">UPLINK ERR</div><div class="value" id="tile-uplink">0</div><div class="bar"><span style="width: 5%"></span></div></div>
-        <div class="tile"><div class="label">EMCON</div><div class="value" id="tile-emcon">L1</div><div class="bar"><span style="width: 30%"></span></div></div>
-        <div class="tile"><div class="label">AUTO NAV</div><div class="value" id="tile-auto-nav">ON</div><div class="bar"><span style="width: 63%"></span></div></div>
-        <div class="tile"><div class="label">WPN COOL</div><div class="value" id="tile-wpn-cool">PRIME</div><div class="bar"><span style="width: 64%"></span></div></div>
-        <div class="tile"><div class="label">VRS GUARD</div><div class="value" id="tile-vrs">MON</div><div class="bar"><span style="width: 22%"></span></div></div>
-        <div class="tile"><div class="label">GEO-FENCE</div><div class="value" id="tile-fence">CLEAR</div><div class="bar"><span style="width: 12%"></span></div></div>
-        <div class="tile"><div class="label">TARGET LIST</div><div class="value" id="tile-target-list">6</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">TRACK QUALITY</div><div class="value" id="tile-track">HIGH</div><div class="bar"><span style="width: 86%"></span></div></div>
-        <div class="tile"><div class="label">MISSILE FUSING</div><div class="value" id="tile-fusing">PROX</div><div class="bar"><span style="width: 70%"></span></div></div>
-        <div class="tile"><div class="label">EW BAND</div><div class="value" id="tile-ew">BROAD</div><div class="bar"><span style="width: 48%"></span></div></div>
-        <div class="tile"><div class="label">COUNTERMEASURE</div><div class="value" id="tile-cm">AUTO</div><div class="bar"><span style="width: 68%"></span></div></div>
-        <div class="tile"><div class="label">JAMMER</div><div class="value" id="tile-jammer">IDLE</div><div class="bar"><span style="width: 20%"></span></div></div>
-        <div class="tile"><div class="label">SIGNAL NOISE</div><div class="value" id="tile-noise">LOW</div><div class="bar"><span style="width: 18%"></span></div></div>
-        <div class="tile"><div class="label">HARDPOINTS</div><div class="value" id="tile-hardpoints">6</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">BAY DOOR</div><div class="value" id="tile-bay-door">CLOSED</div><div class="bar"><span style="width: 10%"></span></div></div>
-        <div class="tile"><div class="label">BAY PRESS</div><div class="value" id="tile-bay-press">12 psi</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">GUN AMMO</div><div class="value" id="tile-gun">450</div><div class="bar"><span style="width: 75%"></span></div></div>
-        <div class="tile"><div class="label">GUN HEAT</div><div class="value" id="tile-gun-heat">LOW</div><div class="bar"><span style="width: 25%"></span></div></div>
-        <div class="tile"><div class="label">LASER</div><div class="value" id="tile-laser">ARM</div><div class="bar"><span style="width: 55%"></span></div></div>
-        <div class="tile"><div class="label">TGP</div><div class="value" id="tile-tgp">STAB</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">ALT ALERT</div><div class="value" id="tile-alt-alert">OFF</div><div class="bar"><span style="width: 10%"></span></div></div>
-        <div class="tile"><div class="label">AP WARN</div><div class="value" id="tile-ap-warn">CLEAR</div><div class="bar"><span style="width: 8%"></span></div></div>
-        <div class="tile"><div class="label">HUD REC</div><div class="value" id="tile-hud-rec">ON</div><div class="bar"><span style="width: 70%"></span></div></div>
-        <div class="tile"><div class="label">FLIR</div><div class="value" id="tile-flir">ON</div><div class="bar"><span style="width: 65%"></span></div></div>
-        <div class="tile"><div class="label">NAV ACC</div><div class="value" id="tile-nav-acc">0.7 m</div><div class="bar"><span style="width: 90%"></span></div></div>
-        <div class="tile"><div class="label">RANGE TO BASE</div><div class="value" id="tile-range-base">42 nm</div><div class="bar"><span style="width: 42%"></span></div></div>
-        <div class="tile"><div class="label">BULLSEYE</div><div class="value" id="tile-bull">BR 270/32</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">TANKER</div><div class="value" id="tile-tanker">BR 090/54</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">FORMATION SEP</div><div class="value" id="tile-sep">0.5 nm</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">G-ONSET</div><div class="value" id="tile-g-onset">2.8 g/s</div><div class="bar"><span style="width: 28%"></span></div></div>
-        <div class="tile"><div class="label">TRIM POS</div><div class="value" id="tile-trim-pos">1.1°</div><div class="bar"><span style="width: 11%"></span></div></div>
-        <div class="tile"><div class="label">WING SWEEP</div><div class="value" id="tile-sweep">FWD</div><div class="bar"><span style="width: 10%"></span></div></div>
-        <div class="tile"><div class="label">MACH ALERT</div><div class="value" id="tile-mach">OFF</div><div class="bar"><span style="width: 5%"></span></div></div>
-        <div class="tile"><div class="label">STALL PROT</div><div class="value" id="tile-stall">ARM</div><div class="bar"><span style="width: 75%"></span></div></div>
-        <div class="tile"><div class="label">CANARD</div><div class="value" id="tile-canard">SYNC</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">AIL SYNC</div><div class="value" id="tile-ail-sync">OK</div><div class="bar"><span style="width: 55%"></span></div></div>
-        <div class="tile"><div class="label">RCS COATING</div><div class="value" id="tile-rcs-coat">INTACT</div><div class="bar"><span style="width: 92%"></span></div></div>
-        <div class="tile"><div class="label">CANOPY ICE</div><div class="value" id="tile-ice">CLEAR</div><div class="bar"><span style="width: 12%"></span></div></div>
-        <div class="tile"><div class="label">RAD ALT</div><div class="value" id="tile-radalt">ARMED</div><div class="bar"><span style="width: 45%"></span></div></div>
-        <div class="tile"><div class="label">TCAS</div><div class="value" id="tile-tcas">TRAFFIC</div><div class="bar"><span style="width: 30%"></span></div></div>
-        <div class="tile"><div class="label">IFF MODE</div><div class="value" id="tile-iff-mode">4</div><div class="bar"><span style="width: 44%"></span></div></div>
-        <div class="tile"><div class="label">INS ALIGN</div><div class="value" id="tile-ins-align">GOOD</div><div class="bar"><span style="width: 90%"></span></div></div>
-        <div class="tile"><div class="label">CABIN HUM</div><div class="value" id="tile-hum">38%</div><div class="bar"><span style="width: 38%"></span></div></div>
-        <div class="tile"><div class="label">CP ECS</div><div class="value" id="tile-cp-ecs">MED</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">SPARKS</div><div class="value" id="tile-sparks">0</div><div class="bar"><span style="width: 5%"></span></div></div>
-        <div class="tile"><div class="label">DEBRIS</div><div class="value" id="tile-debris">LOW</div><div class="bar"><span style="width: 8%"></span></div></div>
-        <div class="tile"><div class="label">APO APS</div><div class="value" id="tile-aps">READY</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">FO CAL</div><div class="value" id="tile-fo-cal">GOOD</div><div class="bar"><span style="width: 78%"></span></div></div>
-        <div class="tile"><div class="label">LASER TEMP</div><div class="value" id="tile-laser-temp">105 °F</div><div class="bar"><span style="width: 52%"></span></div></div>
-        <div class="tile"><div class="label">TGP TEMP</div><div class="value" id="tile-tgp-temp">95 °F</div><div class="bar"><span style="width: 45%"></span></div></div>
-        <div class="tile"><div class="label">CARTRIDGE</div><div class="value" id="tile-cart">OK</div><div class="bar"><span style="width: 80%"></span></div></div>
-        <div class="tile"><div class="label">DECOY</div><div class="value" id="tile-decoy">READY</div><div class="bar"><span style="width: 85%"></span></div></div>
-        <div class="tile"><div class="label">PROX ALERT</div><div class="value" id="tile-prox">CLEAR</div><div class="bar"><span style="width: 10%"></span></div></div>
-        <div class="tile"><div class="label">WING TIP</div><div class="value" id="tile-wingtip">CLEAN</div><div class="bar"><span style="width: 18%"></span></div></div>
-        <div class="tile"><div class="label">AIL SHAKE</div><div class="value" id="tile-ailshake">NONE</div><div class="bar"><span style="width: 8%"></span></div></div>
-        <div class="tile"><div class="label">THRUST SPLIT</div><div class="value" id="tile-split">0%</div><div class="bar"><span style="width: 0%"></span></div></div>
-        <div class="tile"><div class="label">THREAT DB</div><div class="value" id="tile-threat-db">UPD</div><div class="bar"><span style="width: 95%"></span></div></div>
-        <div class="tile"><div class="label">SIGINT</div><div class="value" id="tile-sigint">LIVE</div><div class="bar"><span style="width: 55%"></span></div></div>
-        <div class="tile"><div class="label">RADIO A</div><div class="value" id="tile-radio-a">GUARD</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">RADIO B</div><div class="value" id="tile-radio-b">TACTICAL</div><div class="bar"><span style="width: 65%"></span></div></div>
-        <div class="tile"><div class="label">BEARING TGT</div><div class="value" id="tile-bearing">312°</div><div class="bar"><span style="width: 31%"></span></div></div>
-        <div class="tile"><div class="label">RANGE TGT</div><div class="value" id="tile-range-tgt">14 nm</div><div class="bar"><span style="width: 14%"></span></div></div>
-        <div class="tile"><div class="label">CUE</div><div class="value" id="tile-cue">HUD</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">GUN BURST</div><div class="value" id="tile-gun-burst">SAFE</div><div class="bar"><span style="width: 10%"></span></div></div>
-        <div class="tile"><div class="label">WINGMEN</div><div class="value" id="tile-wingmen">2</div><div class="bar"><span style="width: 20%"></span></div></div>
-        <div class="tile"><div class="label">AI MODE</div><div class="value" id="tile-ai">DEFENSIVE</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">BDA</div><div class="value" id="tile-bda">0%</div><div class="bar"><span style="width: 0%"></span></div></div>
-        <div class="tile"><div class="label">TARGET QUEUE</div><div class="value" id="tile-queue">A</div><div class="bar"><span style="width: 10%"></span></div></div>
-        <div class="tile"><div class="label">MISSILE CAM</div><div class="value" id="tile-mcam">STBY</div><div class="bar"><span style="width: 25%"></span></div></div>
-        <div class="tile"><div class="label">AOI</div><div class="value" id="tile-aoi">FRONT</div><div class="bar"><span style="width: 50%"></span></div></div>
-        <div class="tile"><div class="label">DATA RATE</div><div class="value" id="tile-rate">12 Mbps</div><div class="bar"><span style="width: 60%"></span></div></div>
-        <div class="tile"><div class="label">LINK LAT</div><div class="value" id="tile-lat">23 ms</div><div class="bar"><span style="width: 23%"></span></div></div>
-        <div class="tile"><div class="label">TERRAIN AVOID</div><div class="value" id="tile-ta">ARM</div><div class="bar"><span style="width: 70%"></span></div></div>
-        <div class="tile"><div class="label">JET HEALTH</div><div class="value" id="tile-health">98%</div><div class="bar"><span style="width: 98%"></span></div></div>
-        <div class="tile"><div class="label">LOADOUT MASS</div><div class="value" id="tile-mass">29,400 lbs</div><div class="bar"><span style="width: 60%"></span></div></div>
+        <div class="board-content">
+          <div class="board-section">
+            <div class="section-title">
+              FLIGHT STACK
+              <span class="section-hint">Live input snapshot</span>
+            </div>
+            <div class="section-grid">
+              <div class="tile"><div class="label">THROTTLE</div><div class="value" id="tile-throttle">0%</div><div class="bar"><span id="bar-throttle"></span></div></div>
+              <div class="tile"><div class="label">PITCH</div><div class="value" id="tile-pitch">0°</div></div>
+              <div class="tile"><div class="label">ROLL</div><div class="value" id="tile-roll">0°</div></div>
+              <div class="tile"><div class="label">YAW RATE</div><div class="value" id="tile-yaw">0°/s</div></div>
+              <div class="tile"><div class="label">AOA</div><div class="value" id="tile-aoa">0°</div><div class="dial"><div class="indicator" id="dial-aoa"></div></div></div>
+              <div class="tile"><div class="label">FLIGHT MODE</div><div class="value" id="tile-flight-mode">MANUAL</div><div class="led-row"><div class="led green"></div><div class="led"></div><div class="led"></div></div></div>
+            </div>
+          </div>
+          <div class="board-section">
+            <div class="section-title">
+              SYSTEMS & SAFETY
+              <span class="section-hint">Quick-look</span>
+            </div>
+            <div class="section-grid">
+              <div class="tile"><div class="label">FUEL</div><div class="value" id="tile-fuel">100%</div><div class="bar"><span id="bar-fuel" style="width: 100%"></span></div></div>
+              <div class="tile"><div class="label">MASTER ARM</div><div class="value" id="tile-master-arm">SAFE</div></div>
+              <div class="tile"><div class="label">AFTERBURN</div><div class="value" id="tile-afterburn">OFF</div><div class="led-row"><div class="led"></div><div class="led amber"></div><div class="led green"></div></div></div>
+              <div class="tile"><div class="label">GEAR</div><div class="value" id="tile-gear">UP</div></div>
+              <div class="tile"><div class="label">RADAR</div><div class="value" id="tile-radar">SWEEP</div><div class="bar"><span id="bar-radar" style="width: 70%"></span></div></div>
+              <div class="tile"><div class="label">ICING</div><div class="value" id="tile-icing">CLEAR</div></div>
+            </div>
+          </div>
+          <div class="board-section">
+            <div class="section-title">
+              DIAGNOSTICS
+              <button class="chip ghost" id="btn-refresh-diagnostics">Shuffle</button>
+            </div>
+            <div class="drawer">
+              <div class="chip-list" id="diagnostic-list"></div>
+            </div>
+          </div>
+        </div>
       </div>
       <div id="right-panel">
         <div class="card">
@@ -571,6 +577,7 @@
             <div class="btn" id="btn-reset-view">Recenter View</div>
             <div class="btn" id="btn-spawn-target">Spawn Target</div>
             <div class="btn" id="btn-clear-missiles">Clear Missiles</div>
+            <div class="btn" id="btn-focus-mode">Focus Mode (H)</div>
           </div>
         </div>
         <div class="card">
@@ -582,7 +589,36 @@
             <div>R: Reset attitude | G: Gear toggle</div>
             <div>1: NAV mode | 2: WPN mode</div>
             <div>Mouse move: Fine pitch/roll</div>
-            <div>Esc: Pointer unlock</div>
+            <div>H: Focus HUD toggle | Esc: Pointer unlock</div>
+            <div>Pilot Assist sliders: Alt / heading lock</div>
+          </div>
+        </div>
+        <div class="card compact" id="assist-card">
+          <h4>PILOT ASSIST</h4>
+          <label>Target Altitude <span id="assist-alt-label">400 ft</span></label>
+          <input type="range" id="assist-alt" min="500" max="25000" step="100" value="400">
+          <label>Target Heading <span id="assist-hdg-label">0°</span></label>
+          <input type="range" id="assist-hdg" min="0" max="359" step="1" value="0">
+          <div class="assist-actions">
+            <div class="btn small" id="btn-match-flight">Match Current</div>
+            <div class="btn small" id="btn-hold-alt">Alt Hold</div>
+            <div class="btn small" id="btn-hold-hdg">Hdg Hold</div>
+          </div>
+        </div>
+        <div class="card" id="tactical-map-card">
+          <h4>TACTICAL MAP</h4>
+          <canvas id="tactical-map" width="320" height="220"></canvas>
+          <div id="tactical-map-legend">
+            <span><span class="dot"></span> Flight</span>
+            <span><span class="dot missile"></span> Missile</span>
+          </div>
+        </div>
+        <div class="card compact" id="view-card">
+          <h4>VIEW MODES</h4>
+          <div class="view-toggle" id="camera-mode-group">
+            <div class="btn small ghost" data-camera-mode="chase">Chase</div>
+            <div class="btn small ghost" data-camera-mode="cockpit">Cockpit</div>
+            <div class="btn small ghost" data-camera-mode="orbit">Orbit</div>
           </div>
         </div>
       </div>
@@ -612,6 +648,79 @@
     tileMasterArm.textContent = 'ARMED';
     ui.weaponPill.textContent = 'ARMED';
     const crosshairEl = document.querySelector('#hud-overlay .crosshair');
+    const focusBtn = document.getElementById('btn-focus-mode');
+    const diagnosticsList = document.getElementById('diagnostic-list');
+    const diagnosticsShuffleBtn = document.getElementById('btn-refresh-diagnostics');
+    const altSlider = document.getElementById('assist-alt');
+    const hdgSlider = document.getElementById('assist-hdg');
+    const altLabel = document.getElementById('assist-alt-label');
+    const hdgLabel = document.getElementById('assist-hdg-label');
+    const matchFlightBtn = document.getElementById('btn-match-flight');
+    const holdAltBtn = document.getElementById('btn-hold-alt');
+    const holdHdgBtn = document.getElementById('btn-hold-hdg');
+    const cameraModeGroup = document.getElementById('camera-mode-group');
+    const cameraModeButtons = cameraModeGroup ? cameraModeGroup.querySelectorAll('[data-camera-mode]') : [];
+    const autopilotBtn = document.getElementById('btn-autopilot');
+    const FEET_PER_METER = 3.28084;
+    const metersToFeet = (m) => m * FEET_PER_METER;
+    const feetToMeters = (ft) => ft / FEET_PER_METER;
+    const diagnosticsConfig = [
+      { label: 'Hydraulics', values: ['Nominal', 'Check', 'Low'] },
+      { label: 'ECM', values: ['Standby', 'Active', 'Pulse'] },
+      { label: 'Data Link', values: ['Sync', 'Jammed', 'Retry'] },
+      { label: 'Cooling', values: ['Stable', 'Watch', 'Hot'] },
+      { label: 'OBOGS', values: ['Online', 'Purge', 'Fault'] },
+      { label: 'Radar Health', values: ['Green', 'Degraded', 'Offline'] },
+      { label: 'IFF', values: ['Secure', 'Alert', 'Hold'] },
+      { label: 'Stealth Skin', values: ['Intact', 'Worn', 'Repair'] }
+    ];
+    const autopilot = { enabled: false, targetAlt: 400, targetHdg: 0, lockAlt: false, lockHdg: false };
+    let focusActive = false;
+    const tacticalCanvas = document.getElementById('tactical-map');
+    const tacticalCtx = tacticalCanvas ? tacticalCanvas.getContext('2d') : null;
+    const tacticalMapState = { boundary: 2000, pulse: 0 };
+
+    function applyStatusBanner() {
+      if (focusActive) {
+        ui.statusPill.textContent = 'FOCUS HUD';
+        return;
+      }
+      if (autopilot.enabled && autopilot.lockAlt && autopilot.lockHdg) {
+        ui.statusPill.textContent = 'ASSIST HOLD';
+      } else if (autopilot.enabled && (autopilot.lockAlt || autopilot.lockHdg)) {
+        ui.statusPill.textContent = autopilot.lockAlt ? 'ALT HOLD' : 'HDG HOLD';
+      } else if (autopilot.enabled) {
+        ui.statusPill.textContent = 'AUTOPILOT';
+      } else {
+        ui.statusPill.textContent = 'ENGINES HOT';
+      }
+    }
+
+    function toggleFocusMode(force) {
+      const next = typeof force === 'boolean' ? force : !focusActive;
+      focusActive = next;
+      document.body.classList.toggle('focus-mode', focusActive);
+      if (focusBtn) focusBtn.classList.toggle('toggled', focusActive);
+      applyStatusBanner();
+      addLog('Focus mode ' + (focusActive ? 'enabled' : 'disabled'));
+    }
+
+    function refreshDiagnostics(initial = false) {
+      if (!diagnosticsList) return;
+      diagnosticsList.innerHTML = '';
+      diagnosticsConfig.forEach((item) => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        const value = initial ? item.values[0] : item.values[Math.floor(Math.random() * item.values.length)];
+        chip.innerHTML = item.label.toUpperCase() + ' <strong>' + value.toUpperCase() + '</strong>';
+        diagnosticsList.appendChild(chip);
+      });
+    }
+
+    refreshDiagnostics(true);
+    applyStatusBanner();
+    if (diagnosticsShuffleBtn) diagnosticsShuffleBtn.addEventListener('click', () => refreshDiagnostics(false));
+    if (focusBtn) focusBtn.addEventListener('click', () => toggleFocusMode());
 
     function updateCrosshairVisual(state) {
       const s = state || { x: input.crosshairX, y: input.crosshairY };
@@ -1041,6 +1150,9 @@
         distanceBack: 11 * jetScale,
         height: 3.2 * jetScale,
         lateral: 0,
+        targetDistance: 11 * jetScale,
+        targetHeight: 3.2 * jetScale,
+        targetLateral: 0,
         aimAmount: 0,
         fovBase: BABYLON.Tools.ToRadians(70),
         fovAim: BABYLON.Tools.ToRadians(45),
@@ -1050,15 +1162,48 @@
         tmpPos: new BABYLON.Vector3(),
         tmpTarget: new BABYLON.Vector3(),
       };
+      const cameraProfiles = {
+        chase: { distanceBack: 11 * jetScale, height: 3.2 * jetScale, lateral: 0, fovBase: BABYLON.Tools.ToRadians(70), fovAim: BABYLON.Tools.ToRadians(48), label: 'Chase' },
+        cockpit: { distanceBack: 2.2 * jetScale, height: 0.9 * jetScale, lateral: 0, fovBase: BABYLON.Tools.ToRadians(62), fovAim: BABYLON.Tools.ToRadians(45), label: 'Cockpit' },
+        orbit: { distanceBack: 18 * jetScale, height: 6 * jetScale, lateral: 0.6 * jetScale, fovBase: BABYLON.Tools.ToRadians(80), fovAim: BABYLON.Tools.ToRadians(55), label: 'Orbit' }
+      };
+      function setCameraMode(mode) {
+        const profile = cameraProfiles[mode];
+        if (!profile) return;
+        cameraRigState.targetDistance = profile.distanceBack;
+        cameraRigState.targetHeight = profile.height;
+        cameraRigState.targetLateral = profile.lateral;
+        cameraRigState.fovBase = profile.fovBase;
+        cameraRigState.fovAim = profile.fovAim;
+        cameraModeButtons.forEach(btn => btn.classList.toggle('toggled', btn.dataset.cameraMode === mode));
+        addLog('Camera mode set to ' + profile.label);
+      }
+      cameraModeButtons.forEach(btn => {
+        btn.addEventListener('click', () => setCameraMode(btn.dataset.cameraMode));
+      });
+      setCameraMode('chase');
 
-      const missileTemplate = BABYLON.MeshBuilder.CreateCylinder('missileTemplate', { height: 2.4, diameterTop: 0.1, diameterBottom: 0.25, tessellation: 8 }, scene);
-      const missileCone = BABYLON.MeshBuilder.CreateCylinder('missileTip', { height: 0.6, diameterTop: 0, diameterBottom: 0.25, tessellation: 8 }, scene);
-      missileCone.position.y = 1.5;
+      const missileTemplate = BABYLON.MeshBuilder.CreateCylinder('missileTemplate', { height: 3.6, diameterTop: 0.18, diameterBottom: 0.45, tessellation: 12 }, scene);
+      const missileCone = BABYLON.MeshBuilder.CreateCylinder('missileTip', { height: 1.1, diameterTop: 0, diameterBottom: 0.32, tessellation: 12 }, scene);
+      missileCone.position.y = 2.1;
       missileCone.parent = missileTemplate;
+      const missileTail = BABYLON.MeshBuilder.CreateSphere('missileTail', { diameter: 0.8, segments: 6 }, scene);
+      missileTail.position.y = -1.8;
+      missileTail.parent = missileTemplate;
+      const missileFin = BABYLON.MeshBuilder.CreateBox('missileFin', { width: 0.12, height: 0.9, depth: 0.6 }, scene);
+      missileFin.position = new BABYLON.Vector3(0, -1.2, 0.35);
+      missileFin.parent = missileTemplate;
+      const missileFinMirror = missileFin.clone('missileFinMirror');
+      missileFinMirror.position.z = -0.35;
+      const missileFinSide = missileFin.clone('missileFinSide');
+      missileFinSide.rotation.y = Math.PI / 2;
+      missileFinSide.position = new BABYLON.Vector3(0.35, -1.2, 0);
+      const missileFinSideMirror = missileFinSide.clone('missileFinSideMirror');
+      missileFinSideMirror.position.x = -0.35;
       const missileMat = new BABYLON.StandardMaterial('missileMat', scene);
-      missileMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.82);
-      missileMat.emissiveColor = new BABYLON.Color3(0.05, 0.05, 0.05);
-      missileTemplate.material = missileMat;
+      missileMat.diffuseColor = new BABYLON.Color3(0.88, 0.88, 0.92);
+      missileMat.emissiveColor = new BABYLON.Color3(0.08, 0.08, 0.1);
+      [missileTemplate, missileCone, missileTail, missileFin, missileFinMirror, missileFinSide, missileFinSideMirror].forEach(mesh => { mesh.material = missileMat; });
       missileTemplate.setEnabled(false);
 
       const targets = [];
@@ -1088,9 +1233,34 @@
         masterArm: true,
       };
 
+      function updateAssistButtons() {
+        if (holdAltBtn) holdAltBtn.classList.toggle('toggled', autopilot.enabled && autopilot.lockAlt);
+        if (holdHdgBtn) holdHdgBtn.classList.toggle('toggled', autopilot.enabled && autopilot.lockHdg);
+        if (autopilotBtn) autopilotBtn.classList.toggle('toggled', autopilot.enabled);
+      }
+
+      function syncAssistUI() {
+        if (altSlider && altLabel) {
+          const feetAlt = Math.round(metersToFeet(autopilot.targetAlt));
+          altSlider.value = feetAlt;
+          altLabel.textContent = feetAlt + ' ft';
+        }
+        if (hdgSlider && hdgLabel) {
+          const heading = ((autopilot.targetHdg % 360) + 360) % 360;
+          hdgSlider.value = heading;
+          hdgLabel.textContent = heading.toFixed(0) + '°';
+        }
+        updateAssistButtons();
+        applyStatusBanner();
+      }
+
       const input = { keys: {}, pointerLocked: false, aiming: false, crosshairX: 0, crosshairY: 0, crosshairRadius: 140 };
       updateCrosshairVisual({ x: input.crosshairX, y: input.crosshairY });
       window.addEventListener('keydown', (e) => {
+        if (e.code === 'KeyH') {
+          toggleFocusMode();
+          return;
+        }
         input.keys[e.code] = true;
         if (e.code === 'Digit1') ui.modePill.textContent = 'NAV MODE';
         if (e.code === 'Digit2') ui.modePill.textContent = 'WPN MODE';
@@ -1134,12 +1304,26 @@
       });
       canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-      document.getElementById('btn-master-arm').onclick = () => toggleMasterArm();
-      document.getElementById('btn-afterburn').onclick = () => { controls.afterburner = !controls.afterburner; };
-      document.getElementById('btn-autopilot').onclick = () => { autopilot.enabled = !autopilot.enabled; addLog('Autopilot ' + (autopilot.enabled ? 'enabled' : 'disabled')); };
-      document.getElementById('btn-reset-view').onclick = () => resetAttitude();
-      document.getElementById('btn-spawn-target').onclick = () => spawnTarget();
-      document.getElementById('btn-clear-missiles').onclick = () => {
+      const masterArmBtn = document.getElementById('btn-master-arm');
+      const afterburnBtn = document.getElementById('btn-afterburn');
+      const resetViewBtn = document.getElementById('btn-reset-view');
+      const spawnTargetBtn = document.getElementById('btn-spawn-target');
+      const clearMissilesBtn = document.getElementById('btn-clear-missiles');
+
+      if (masterArmBtn) masterArmBtn.onclick = () => toggleMasterArm();
+      if (afterburnBtn) afterburnBtn.onclick = () => { controls.afterburner = !controls.afterburner; };
+      if (autopilotBtn) autopilotBtn.onclick = () => {
+        autopilot.enabled = !autopilot.enabled;
+        if (!autopilot.enabled) {
+          autopilot.lockAlt = false;
+          autopilot.lockHdg = false;
+        }
+        addLog('Autopilot ' + (autopilot.enabled ? 'enabled' : 'disabled'));
+        syncAssistUI();
+      };
+      if (resetViewBtn) resetViewBtn.onclick = () => resetAttitude();
+      if (spawnTargetBtn) spawnTargetBtn.onclick = () => spawnTarget();
+      if (clearMissilesBtn) clearMissilesBtn.onclick = () => {
         missiles.forEach(m => {
           m.mesh.dispose();
           m.alive = false;
@@ -1169,58 +1353,176 @@
         mass: 14500,
         fuel: 100,
       };
+      autopilot.targetAlt = jetState.position.y;
+      autopilot.targetHdg = 0;
+      syncAssistUI();
+
+      if (altSlider) altSlider.addEventListener('input', (event) => {
+        autopilot.targetAlt = feetToMeters(parseFloat(event.target.value));
+        syncAssistUI();
+      });
+      if (hdgSlider) hdgSlider.addEventListener('input', (event) => {
+        autopilot.targetHdg = parseFloat(event.target.value);
+        syncAssistUI();
+      });
+      if (holdAltBtn) holdAltBtn.addEventListener('click', () => {
+        autopilot.lockAlt = !autopilot.lockAlt;
+        if (autopilot.lockAlt) autopilot.enabled = true;
+        addLog('Altitude hold ' + (autopilot.lockAlt ? 'armed' : 'released'));
+        syncAssistUI();
+      });
+      if (holdHdgBtn) holdHdgBtn.addEventListener('click', () => {
+        autopilot.lockHdg = !autopilot.lockHdg;
+        if (autopilot.lockHdg) autopilot.enabled = true;
+        addLog('Heading hold ' + (autopilot.lockHdg ? 'armed' : 'released'));
+        syncAssistUI();
+      });
 
       camPivot.rotationQuaternion = BABYLON.Quaternion.Identity();
-
-      const autopilot = { enabled: false, targetAlt: 400, targetHdg: 0 };
 
       const missiles = [];
       let missileLaunchIndex = 0;
 
-      function spawnExplosion(position) {
+      function spawnExplosion(position, magnitude = 1) {
         const impactPos = position.clone ? position.clone() : new BABYLON.Vector3(position.x, position.y, position.z);
-        const flash = BABYLON.MeshBuilder.CreateSphere('explosionFlash-' + Math.random(), { diameter: 2.2, segments: 8 }, scene);
+        const flash = BABYLON.MeshBuilder.CreateSphere('explosionFlash-' + Math.random(), { diameter: 3 + magnitude * 2.2, segments: 10 }, scene);
         const flashMat = new BABYLON.StandardMaterial('flashMat-' + Math.random(), scene);
-        flashMat.emissiveColor = new BABYLON.Color3(1, 0.7, 0.35);
-        flashMat.alpha = 0.9;
+        flashMat.emissiveColor = new BABYLON.Color3(1, 0.8, 0.45);
+        flashMat.alpha = 0.95;
         flash.material = flashMat;
         flash.position.copyFrom(impactPos);
-        let flashLife = 0.35;
+        let flashLife = 0.35 + 0.2 * magnitude;
         const flashObserver = scene.onBeforeRenderObservable.add(() => {
           const dt = engine.getDeltaTime() / 1000;
           flashLife -= dt;
-          flash.scaling.addInPlace(new BABYLON.Vector3(dt * 16, dt * 16, dt * 16));
-          flashMat.alpha = Math.max(0, flashLife * 2);
+          const expansion = 18 * magnitude * dt;
+          flash.scaling.addInPlace(new BABYLON.Vector3(expansion, expansion, expansion));
+          flashMat.alpha = Math.max(0, flashLife * 1.8);
           if (flashLife <= 0) {
             flash.dispose();
             scene.onBeforeRenderObservable.remove(flashObserver);
           }
         });
 
-        const explosion = new BABYLON.ParticleSystem('missileExplosion-' + Math.random(), 300, scene);
+        const shockwave = BABYLON.MeshBuilder.CreateDisc('shockwave-' + Math.random(), { radius: 1.4, tessellation: 48 }, scene);
+        shockwave.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+        const shockMat = new BABYLON.StandardMaterial('shockMat-' + Math.random(), scene);
+        shockMat.emissiveColor = new BABYLON.Color3(1, 0.6, 0.2);
+        shockMat.alpha = 0.85;
+        shockMat.backFaceCulling = false;
+        shockwave.material = shockMat;
+        shockwave.position.copyFrom(impactPos);
+        let shockLife = 0.55 + 0.2 * magnitude;
+        const shockObserver = scene.onBeforeRenderObservable.add(() => {
+          const dt = engine.getDeltaTime() / 1000;
+          shockLife -= dt;
+          const progress = 1 - Math.max(shockLife, 0) / (0.55 + 0.2 * magnitude);
+          shockwave.scaling.setAll(1 + progress * 12 * magnitude);
+          shockMat.alpha = Math.max(0, 0.85 - progress);
+          if (shockLife <= 0) {
+            shockwave.dispose();
+            scene.onBeforeRenderObservable.remove(shockObserver);
+          }
+        });
+
+        const explosion = new BABYLON.ParticleSystem('missileExplosion-' + Math.random(), Math.floor(420 * magnitude), scene);
         explosion.particleTexture = explosionTexture;
         explosion.emitter = impactPos;
-        explosion.minEmitPower = 30;
-        explosion.maxEmitPower = 85;
-        explosion.minLifeTime = 0.2;
-        explosion.maxLifeTime = 0.45;
-        explosion.minSize = 1.2;
-        explosion.maxSize = 4.5;
+        explosion.minEmitPower = 30 * magnitude;
+        explosion.maxEmitPower = 95 * magnitude;
+        explosion.minLifeTime = 0.25;
+        explosion.maxLifeTime = 0.65;
+        explosion.minSize = 1.6 * magnitude;
+        explosion.maxSize = 5.6 * magnitude;
         explosion.direction1 = new BABYLON.Vector3(-1, -1, -1);
         explosion.direction2 = new BABYLON.Vector3(1, 1, 1);
-        explosion.gravity = new BABYLON.Vector3(0, -18, 0);
+        explosion.gravity = new BABYLON.Vector3(0, -14, 0);
         explosion.emitRate = 0;
         explosion.disposeOnStop = true;
         explosion.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
-        explosion.manualEmitCount = 260;
+        explosion.manualEmitCount = Math.floor(360 * magnitude);
         explosion.start();
-        setTimeout(() => explosion.stop(), 180);
+        setTimeout(() => explosion.stop(), 280);
       }
 
-      function handleMissileImpact(missile, message) {
+      function spawnBoomText(position, label = 'BOOM') {
+        if (!scene) return;
+        const anchor = position.clone ? position.clone() : new BABYLON.Vector3(position.x, position.y, position.z);
+        const plane = BABYLON.MeshBuilder.CreatePlane('impactText-' + Math.random(), { width: 6, height: 2.4 }, scene);
+        plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+        plane.position.copyFrom(anchor);
+        plane.position.y += 3;
+        const tex = new BABYLON.DynamicTexture('impactTextTex-' + Math.random(), { width: 512, height: 256 }, scene, true);
+        const ctx = tex.getContext();
+        ctx.clearRect(0, 0, 512, 256);
+        ctx.font = 'bold 120px Rajdhani';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = '#ff9c3a';
+        ctx.lineWidth = 12;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeText(label, 256, 132);
+        ctx.fillText(label, 256, 132);
+        tex.update();
+        const mat = new BABYLON.StandardMaterial('impactTextMat-' + Math.random(), scene);
+        mat.diffuseTexture = tex;
+        mat.opacityTexture = tex;
+        mat.emissiveColor = new BABYLON.Color3(1, 0.55, 0.25);
+        mat.backFaceCulling = false;
+        mat.alpha = 1;
+        plane.material = mat;
+        let life = 1.2;
+        const observer = scene.onBeforeRenderObservable.add(() => {
+          const dt = engine.getDeltaTime() / 1000;
+          life -= dt;
+          const progress = 1 - Math.max(life, 0) / 1.2;
+          plane.position.y += dt * 6;
+          plane.scaling.setAll(1 + progress * 0.4);
+          mat.alpha = Math.max(0, 1 - progress);
+          if (life <= 0) {
+            plane.dispose();
+            scene.onBeforeRenderObservable.remove(observer);
+          }
+        });
+      }
+
+      function vaporizeTarget(target) {
+        if (!target || !target.mesh) return;
+        const mesh = target.mesh;
+        const startScale = mesh.scaling.clone();
+        let mat;
+        if (mesh.material && mesh.material.clone) {
+          mat = mesh.material.clone('targetVaporMat-' + Math.random());
+        } else {
+          mat = new BABYLON.StandardMaterial('targetVaporMat-' + Math.random(), scene);
+        }
+        mat.alpha = 1;
+        mat.emissiveColor = new BABYLON.Color3(1, 0.65, 0.25);
+        mesh.material = mat;
+        let life = 0.85;
+        const vaporObserver = scene.onBeforeRenderObservable.add(() => {
+          const dt = engine.getDeltaTime() / 1000;
+          life -= dt;
+          const progress = 1 - Math.max(life, 0) / 0.85;
+          const expand = 1 + progress * 0.65;
+          mesh.scaling.set(startScale.x * expand, startScale.y * Math.max(0.2, 1 - progress * 0.85), startScale.z * expand);
+          mat.alpha = Math.max(0, 1 - progress);
+          mat.emissiveColor = BABYLON.Color3.Lerp(new BABYLON.Color3(1, 0.85, 0.4), new BABYLON.Color3(1, 0.2, 0.05), progress);
+          if (life <= 0) {
+            mesh.dispose();
+            if (target) target.mesh = null;
+            scene.onBeforeRenderObservable.remove(vaporObserver);
+          }
+        });
+      }
+
+      function handleMissileImpact(missile, message, options = {}) {
         if (!missile.alive) return;
-        const impactPos = missile.solver ? missile.solver.state.position.clone() : BABYLON.Vector3.Zero();
-        spawnExplosion(impactPos);
+        const impactPos = options.impactPosition ? options.impactPosition.clone() : (missile.solver ? missile.solver.state.position.clone() : BABYLON.Vector3.Zero());
+        spawnExplosion(impactPos, options.explosionScale || 1);
+        if (options.boomText) {
+          spawnBoomText(impactPos.clone(), options.boomText);
+        }
         missile.alive = false;
         missile.mesh.dispose();
         cameraRigState.missileZoom = Math.max(cameraRigState.missileZoom, cameraRigState.missileZoomDuration * 0.5);
@@ -1230,6 +1532,13 @@
       function forwardVector() { return new BABYLON.Vector3(0, 1, 0).rotateByQuaternionToRef(jetState.orientation, new BABYLON.Vector3()); }
       function rightVector() { return new BABYLON.Vector3(1, 0, 0).rotateByQuaternionToRef(jetState.orientation, new BABYLON.Vector3()); }
       function upVector() { return new BABYLON.Vector3(0, 0, 1).rotateByQuaternionToRef(jetState.orientation, new BABYLON.Vector3()); }
+      if (matchFlightBtn) matchFlightBtn.addEventListener('click', () => {
+        autopilot.targetAlt = jetState.position.y;
+        const heading = ((Math.atan2(forwardVector().x, forwardVector().z) * 180 / Math.PI) + 360) % 360;
+        autopilot.targetHdg = heading;
+        addLog('Pilot assist synced to current flight path');
+        syncAssistUI();
+      });
       function crosshairDirection() {
         const width = engine.getRenderWidth(true);
         const height = engine.getRenderHeight(true);
@@ -1396,7 +1705,7 @@
         }
         const groundHeight = terrain.getHeightAtCoordinates(pos.x, pos.z) + 2;
         if (pos.y <= groundHeight) {
-          handleMissileImpact(m, 'Missile impact');
+          handleMissileImpact(m, 'Missile impact', { explosionScale: 1.25 });
           return;
         }
         if (m.time > 24) {
@@ -1407,15 +1716,20 @@
         for (let i = 0; i < targets.length; i++) {
           if (!m.alive) break;
           const t = targets[i];
-          if (t.alive && BABYLON.Vector3.DistanceSquared(t.mesh.position, pos) < 36) {
+          if (t.alive && BABYLON.Vector3.DistanceSquared(t.mesh.position, pos) < 49) {
             t.alive = false;
-            t.mesh.dispose();
-            handleMissileImpact(m, 'Target destroyed');
+            const impactPos = t.mesh.position.clone();
+            vaporizeTarget(t);
+            handleMissileImpact(m, 'Target vaporized', { impactPosition: impactPos, explosionScale: 1.6, boomText: 'BOOM' });
           }
         }
       }
 
       function updateCameraRig(dt) {
+        const rigResponse = 1 - Math.exp(-dt * 3);
+        cameraRigState.distanceBack += (cameraRigState.targetDistance - cameraRigState.distanceBack) * rigResponse;
+        cameraRigState.height += (cameraRigState.targetHeight - cameraRigState.height) * rigResponse;
+        cameraRigState.lateral += (cameraRigState.targetLateral - cameraRigState.lateral) * rigResponse;
         const aimTarget = input.aiming ? 1 : 0;
         cameraRigState.aimAmount += (aimTarget - cameraRigState.aimAmount) * (1 - Math.exp(-dt * 8));
         if (cameraRigState.missileZoom > 0) {
@@ -1449,6 +1763,105 @@
         camera.fov = BABYLON.Scalar.Lerp(camera.fov, targetFov, 1 - Math.exp(-dt * 6));
       }
 
+      function updateTacticalMap(dt = 0) {
+        if (!tacticalCtx || !tacticalCanvas) return;
+        const width = tacticalCanvas.width;
+        const height = tacticalCanvas.height;
+        if (width === 0 || height === 0) return;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const mapRadius = Math.min(centerX, centerY) - 12;
+        if (mapRadius <= 0) return;
+        const pxPerMeter = mapRadius / tacticalMapState.boundary;
+        tacticalMapState.pulse = (tacticalMapState.pulse + dt * 0.7) % 1;
+
+        const bg = tacticalCtx.createLinearGradient(0, 0, 0, height);
+        bg.addColorStop(0, 'rgba(4, 9, 16, 0.96)');
+        bg.addColorStop(1, 'rgba(3, 6, 12, 0.9)');
+        tacticalCtx.fillStyle = bg;
+        tacticalCtx.fillRect(0, 0, width, height);
+
+        const gridSpacing = 32;
+        tacticalCtx.strokeStyle = 'rgba(57, 210, 255, 0.08)';
+        tacticalCtx.lineWidth = 1;
+        for (let x = 0; x <= width; x += gridSpacing) {
+          tacticalCtx.beginPath();
+          tacticalCtx.moveTo(x + 0.5, 0);
+          tacticalCtx.lineTo(x + 0.5, height);
+          tacticalCtx.stroke();
+        }
+        for (let y = 0; y <= height; y += gridSpacing) {
+          tacticalCtx.beginPath();
+          tacticalCtx.moveTo(0, y + 0.5);
+          tacticalCtx.lineTo(width, y + 0.5);
+          tacticalCtx.stroke();
+        }
+
+        tacticalCtx.strokeStyle = 'rgba(57, 210, 255, 0.25)';
+        tacticalCtx.setLineDash([6, 6]);
+        tacticalCtx.beginPath();
+        tacticalCtx.arc(centerX, centerY, mapRadius, 0, Math.PI * 2);
+        tacticalCtx.stroke();
+        tacticalCtx.setLineDash([]);
+
+        const pulseAlpha = Math.max(0, 0.35 - tacticalMapState.pulse * 0.3);
+        const pulseRadius = mapRadius * (0.2 + tacticalMapState.pulse * 0.8);
+        tacticalCtx.strokeStyle = 'rgba(87, 247, 158, ' + pulseAlpha + ')';
+        tacticalCtx.beginPath();
+        tacticalCtx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+        tacticalCtx.stroke();
+
+        tacticalCtx.strokeStyle = 'rgba(57, 210, 255, 0.18)';
+        tacticalCtx.beginPath();
+        tacticalCtx.moveTo(centerX, centerY - mapRadius);
+        tacticalCtx.lineTo(centerX, centerY + mapRadius);
+        tacticalCtx.moveTo(centerX - mapRadius, centerY);
+        tacticalCtx.lineTo(centerX + mapRadius, centerY);
+        tacticalCtx.stroke();
+
+        const projectPoint = (worldVec) => {
+          const dx = worldVec.x - jetState.position.x;
+          const dz = worldVec.z - jetState.position.z;
+          const distance = Math.sqrt(dx * dx + dz * dz);
+          const capped = distance > tacticalMapState.boundary ? tacticalMapState.boundary : distance;
+          const scale = distance === 0 ? 0 : capped / distance;
+          return {
+            x: centerX + dx * pxPerMeter * scale,
+            y: centerY + dz * pxPerMeter * scale,
+            clamped: distance > tacticalMapState.boundary
+          };
+        };
+
+        const heading = Math.atan2(forwardVector().x, forwardVector().z);
+        tacticalCtx.save();
+        tacticalCtx.translate(centerX, centerY);
+        tacticalCtx.rotate(-heading);
+        tacticalCtx.fillStyle = 'rgba(57, 210, 255, 0.95)';
+        tacticalCtx.beginPath();
+        tacticalCtx.moveTo(0, -14);
+        tacticalCtx.lineTo(9, 10);
+        tacticalCtx.lineTo(-9, 10);
+        tacticalCtx.closePath();
+        tacticalCtx.fill();
+        tacticalCtx.restore();
+
+        missiles.forEach((missile) => {
+          if (!missile.alive || !missile.solver) return;
+          const projected = projectPoint(missile.solver.state.position);
+          tacticalCtx.beginPath();
+          tacticalCtx.fillStyle = projected.clamped ? 'rgba(255, 179, 71, 0.45)' : 'rgba(255, 179, 71, 0.95)';
+          tacticalCtx.arc(projected.x, projected.y, projected.clamped ? 3 : 4.5, 0, Math.PI * 2);
+          tacticalCtx.fill();
+          const vel = missile.solver.state.velocity;
+          const velScale = pxPerMeter * 0.25;
+          tacticalCtx.strokeStyle = 'rgba(255, 179, 71, 0.6)';
+          tacticalCtx.beginPath();
+          tacticalCtx.moveTo(projected.x, projected.y);
+          tacticalCtx.lineTo(projected.x + vel.x * velScale, projected.y + vel.z * velScale);
+          tacticalCtx.stroke();
+        });
+      }
+
       function updateHUD(dt) {
         ui.hudThrottle.textContent = Math.round(controls.throttle * 100) + '%';
         ui.hudSpeed.textContent = Math.round(jetState.velocity.length() * 1.94384) + ' kts';
@@ -1468,6 +1881,9 @@
         document.getElementById('tile-yaw').textContent = (controls.yaw * 45).toFixed(0) + '°/s';
         document.getElementById('tile-fuel').textContent = jetState.fuel.toFixed(0) + '%';
         document.getElementById('bar-fuel').style.width = jetState.fuel + '%';
+        document.getElementById('tile-afterburn').textContent = controls.afterburner ? 'ON' : 'OFF';
+        const modeLabel = autopilot.enabled ? (autopilot.lockAlt && autopilot.lockHdg ? 'AP HOLD' : autopilot.lockAlt ? 'ALT HOLD' : autopilot.lockHdg ? 'HDG HOLD' : 'ASSIST') : 'MANUAL';
+        document.getElementById('tile-flight-mode').textContent = modeLabel;
         ui.badgeTargets.textContent = 'TARGETS: ' + targets.filter(t => t.alive).length;
       }
 
@@ -1483,11 +1899,15 @@
       function step(dt) {
         updateInputs(dt);
         if (autopilot.enabled) {
-          const headingError = ((autopilot.targetHdg - Math.atan2(forwardVector().x, forwardVector().z) * 180 / Math.PI + 540) % 360) - 180;
-          controls.yawInput = clamp(headingError / 60, -0.4, 0.4);
-          controls.rollInput = clamp(-headingError / 90, -0.5, 0.5);
-          const altError = (autopilot.targetAlt - jetState.position.y);
-          controls.pitchInput = clamp(-altError / 800, -0.45, 0.45);
+          if (autopilot.lockHdg) {
+            const headingError = ((autopilot.targetHdg - Math.atan2(forwardVector().x, forwardVector().z) * 180 / Math.PI + 540) % 360) - 180;
+            controls.yawInput = clamp(headingError / 60, -0.4, 0.4);
+            controls.rollInput = clamp(-headingError / 90, -0.5, 0.5);
+          }
+          if (autopilot.lockAlt) {
+            const altError = (autopilot.targetAlt - jetState.position.y);
+            controls.pitchInput = clamp(-altError / 800, -0.45, 0.45);
+          }
         }
         const controlBlend = 1 - Math.exp(-dt * 6);
         controls.pitch += (controls.pitchInput - controls.pitch) * controlBlend;
@@ -1501,36 +1921,7 @@
         updateCameraRig(dt);
         animateIndicators(dt);
         updateHUD(dt);
-      }
-
-      let last = performance.now();
-      engine.runRenderLoop(() => {
-        const now = performance.now();
-        const dt = Math.min(0.05, (now - last) / 1000);
-        last = now;
-        step(dt);
-        ui.badgeFps.textContent = 'FPS: ' + engine.getFps().toFixed(0);
-        scene.render();
-      });
-
-      window.addEventListener('resize', () => engine.resize());
-      addLog('Simulation initialized');
-      return scene;
-    }
-
-    const scene = createScene();
-  </script>
-</body>
-</html>
-        jetRoot.position.copyFrom(jetState.position);
-        jetRoot.rotationQuaternion = jetState.orientation;
-        missiles.forEach(m => stepMissile(m, dt));
-        for (let i = missiles.length - 1; i >= 0; i--) if (!missiles[i].alive) missiles.splice(i, 1);
-        updateCameraRig(dt);
-        const targetFov = BABYLON.Tools.ToRadians(70 + controls.throttle * 8 + Math.min(12, jetState.velocity.length() * 0.02));
-        camera.fov = BABYLON.Scalar.Lerp(camera.fov, targetFov, 1 - Math.exp(-dt * 4));
-        animateIndicators(dt);
-        updateHUD(dt);
+        updateTacticalMap(dt);
       }
 
       let last = performance.now();
